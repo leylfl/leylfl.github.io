@@ -82,16 +82,16 @@
 <meta name="description" content="0x01 开篇&amp;emsp;&amp;emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码不是最新的，这篇文章是根据最新源码来进行阅读的。&amp;emsp;&amp;emsp;进入正题之前，我们">
 <meta property="og:type" content="article">
 <meta property="og:title" content="浅谈iOS多线程(源码)">
-<meta property="og:url" content="http://yoursite.com/2018/01/16/浅谈iOS多线程-源码/index.html">
+<meta property="og:url" content="https://leylfl.github.io/2018/01/16/浅谈iOS多线程-源码/index.html">
 <meta property="og:site_name" content="朝暮的闲暇时刻">
 <meta property="og:description" content="0x01 开篇&amp;emsp;&amp;emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码不是最新的，这篇文章是根据最新源码来进行阅读的。&amp;emsp;&amp;emsp;进入正题之前，我们">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/2018/01/16/浅谈iOS多线程-源码/gcd_opensource.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/01/16/浅谈iOS多线程-源码/gcd_opensource.png">
 <meta property="og:updated_time" content="2018-01-29T01:43:14.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="浅谈iOS多线程(源码)">
 <meta name="twitter:description" content="0x01 开篇&amp;emsp;&amp;emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码不是最新的，这篇文章是根据最新源码来进行阅读的。&amp;emsp;&amp;emsp;进入正题之前，我们">
-<meta name="twitter:image" content="http://yoursite.com/2018/01/16/浅谈iOS多线程-源码/gcd_opensource.png">
+<meta name="twitter:image" content="https://leylfl.github.io/2018/01/16/浅谈iOS多线程-源码/gcd_opensource.png">
 
 
 
@@ -121,7 +121,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/01/16/浅谈iOS多线程-源码/"/>
+  <link rel="canonical" href="https://leylfl.github.io/2018/01/16/浅谈iOS多线程-源码/"/>
 
 
 
@@ -234,7 +234,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/16/浅谈iOS多线程-源码/">
+    <link itemprop="mainEntityOfPage" href="https://leylfl.github.io/2018/01/16/浅谈iOS多线程-源码/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="朝暮">
