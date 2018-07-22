@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="0x01 Tagged Pointer&amp;emsp;&amp;emsp;当我们定义一个变量的时候，比如NSNumber *a = @123，内存中的分布如下   &amp;emsp;&amp;emsp;这样就造成了资源浪费，定义一个变量，保存简单的123却用了16个字节，造成了内存碎片；而且为了维护它，还需要额外的开销用引用计数管理它。所以在64系统中，苹果为了解决这样的问题，提出了Tagged Pointer概念。 &amp;e">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS的内存管理">
+<meta property="og:url" content="https://leylfl.github.io/2018/05/26/iOS的内存管理/index.html">
+<meta property="og:site_name" content="朝暮的闲暇时刻">
+<meta property="og:description" content="0x01 Tagged Pointer&amp;emsp;&amp;emsp;当我们定义一个变量的时候，比如NSNumber *a = @123，内存中的分布如下   &amp;emsp;&amp;emsp;这样就造成了资源浪费，定义一个变量，保存简单的123却用了16个字节，造成了内存碎片；而且为了维护它，还需要额外的开销用引用计数管理它。所以在64系统中，苹果为了解决这样的问题，提出了Tagged Pointer概念。 &amp;e">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/26/iOS的内存管理/temp_var_sample.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/26/iOS的内存管理/NSTaggedPointerString.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/26/iOS的内存管理/autoreleasepool_format.png">
+<meta property="og:updated_time" content="2018-07-20T12:07:10.439Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS的内存管理">
+<meta name="twitter:description" content="0x01 Tagged Pointer&amp;emsp;&amp;emsp;当我们定义一个变量的时候，比如NSNumber *a = @123，内存中的分布如下   &amp;emsp;&amp;emsp;这样就造成了资源浪费，定义一个变量，保存简单的123却用了16个字节，造成了内存碎片；而且为了维护它，还需要额外的开销用引用计数管理它。所以在64系统中，苹果为了解决这样的问题，提出了Tagged Pointer概念。 &amp;e">
+<meta name="twitter:image" content="https://leylfl.github.io/2018/05/26/iOS的内存管理/temp_var_sample.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://leylfl.github.io/2018/05/26/iOS的内存管理/"/>
+
+
+
+
+
+  <title>iOS的内存管理 | 朝暮的闲暇时刻</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">朝暮的闲暇时刻</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://leylfl.github.io/2018/05/26/iOS的内存管理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="朝暮">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="朝暮的闲暇时刻">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">iOS的内存管理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-26T15:25:13+08:00">
+                2018-05-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="0x01-Tagged-Pointer"><a href="#0x01-Tagged-Pointer" class="headerlink" title="0x01 Tagged Pointer"></a>0x01 Tagged Pointer</h1><p>&emsp;&emsp;当我们定义一个变量的时候，比如<code>NSNumber *a = @123</code>，内存中的分布如下</p>
+<p><img src="temp_var_sample.png" alt="变量内存示意图"> </p>
+<p>&emsp;&emsp;这样就造成了资源浪费，定义一个变量，保存简单的<code>123</code>却用了16个字节，造成了内存碎片；而且为了维护它，还需要额外的开销用引用计数管理它。所以在64系统中，苹果为了解决这样的问题，提出了Tagged Pointer概念。</p>
+<p>&emsp;&emsp;Tagged Pointer直接将数据保存到指针中，其指针格式变为tag + data的形式，一般用于NSNumber、NSString、NSDate。我们以NSString为例，看下什么是Tagged Pointer。</p>
+<p>&emsp;&emsp;首先定义变量如下</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">NSString</span> *a = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"%@"</span>, <span class="string">@"123"</span>];</span><br><span class="line"><span class="built_in">NSString</span> *b = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"%@"</span>, <span class="string">@"1234567890123456"</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// 不能下面这样定义，这样定义的@"123"是常量</span></span><br><span class="line"><span class="built_in">NSString</span> *a = <span class="string">@"123"</span>;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;我们看到变量a的类型变为<code>NSTaggedPointerString</code></p>
+<p><img src="NSTaggedPointerString.png" alt="NSTaggedPointerString示意图"> </p>
+<p>&emsp;&emsp;我们再打印下内存地址看下，很明显变量a的地址由33 + 32 + 31 + 字符串长度组成，其中3表示字符串类型的tag，后面的3、2、1就是保存的值。而变量b的地址很明显是个堆地址。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(lldb) p a</span><br><span class="line">(NSTaggedPointerString *) $<span class="number">0</span> = <span class="number">0xa000000003332313</span> @<span class="string">"123"</span></span><br><span class="line">(lldb) p b</span><br><span class="line">(__NSCFString *) $<span class="number">1</span> = <span class="number">0x00000001d004b250</span> @<span class="string">"1234567890123456"</span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;那么，下面的代码会有什么问题？</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="built_in">NSString</span> *name;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)viewDidLoad &#123;</span><br><span class="line">    [<span class="keyword">super</span> viewDidLoad];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">NSInteger</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; i++) &#123;</span><br><span class="line">        <span class="built_in">dispatch_async</span>(dispatch_get_global_queue(<span class="number">0</span>, <span class="number">0</span>), ^&#123;</span><br><span class="line">            <span class="keyword">self</span>.name = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"%@"</span>, <span class="string">@"123456789012"</span>];</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;我们会看到闪退，这是因为多线程环境下，调用setter方法的时候，可能多个线程同时进入到if语句内，导致同一个对象在引用计数只有1的情况下，<code>release</code>方法被重复调用，从而造成闪退。</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)setName:(<span class="built_in">NSString</span> *)name &#123;</span><br><span class="line">    <span class="keyword">if</span>(_name != name) &#123;</span><br><span class="line">        [_name release];</span><br><span class="line">        _name = [name <span class="keyword">retain</span>];</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;那么同样的，下面的代码会闪退吗？</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="built_in">NSString</span> *name;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)viewDidLoad &#123;</span><br><span class="line">    [<span class="keyword">super</span> viewDidLoad];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">NSInteger</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; i++) &#123;</span><br><span class="line">        <span class="built_in">dispatch_async</span>(dispatch_get_global_queue(<span class="number">0</span>, <span class="number">0</span>), ^&#123;</span><br><span class="line">            <span class="keyword">self</span>.name = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"%@"</span>, <span class="string">@"123"</span>];</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;答案是不会，因为self.name此时是Tagged Pointer，不参与引用计数管理，其retainCount可以认为是个无限值，所以任由你release，能闪退算它输。</p>
+<p>&emsp;&emsp;我们可以通过<code>CFGetRetainCount</code>计算retainCount来证实下。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (NSInteger i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; i++) &#123;</span><br><span class="line">        dispatch_async(dispatch_get_global_queue(<span class="number">0</span>, <span class="number">0</span>), ^&#123;</span><br><span class="line">            self.name = [NSString stringWithFormat:@<span class="string">"%@"</span>, @<span class="string">"123"</span>];</span><br><span class="line">            CFIndex idx = CFGetRetainCount((__bridge CFTypeRef)(self.name));</span><br><span class="line">        &#125;);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 打印的值</span></span><br><span class="line">(CFIndex) idx = <span class="number">9223372036854775807</span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;正是因为这样的特性，同样我们在下面的代码，打印变量a的值还是<code>123</code>，而不是<code>nil</code>。</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">__<span class="keyword">weak</span> <span class="built_in">NSString</span> *a = <span class="literal">nil</span>;</span><br><span class="line">   <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        a = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"%@"</span>, <span class="string">@"123"</span>];</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="built_in">NSLog</span>(<span class="string">@"%@"</span>, a);</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;那么，我们看下系统是怎么判断是不是Tagged Pointer。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">bool</span> _objc_isTaggedPointer(<span class="keyword">const</span> <span class="keyword">void</span> * _Nullable ptr) </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> ((<span class="keyword">uintptr_t</span>)ptr &amp; _OBJC_TAG_MASK) == _OBJC_TAG_MASK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;对于宏<code>_OBJC_TAG_MASK</code>定义又如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">if</span> OBJC_MSB_TAGGED_POINTERS</span></span><br><span class="line"><span class="meta">#   <span class="meta-keyword">define</span> _OBJC_TAG_MASK (1UL&lt;&lt;63)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="meta">#   <span class="meta-keyword">define</span> _OBJC_TAG_MASK 1UL</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 对于OBJC_MSB_TAGGED_POINTERS定义如下</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> TARGET_OS_OSX &amp;&amp; __x86_64__</span></span><br><span class="line"><span class="meta">#   <span class="meta-keyword">define</span> OBJC_MSB_TAGGED_POINTERS 0 <span class="comment">// macOS</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="meta">#   <span class="meta-keyword">define</span> OBJC_MSB_TAGGED_POINTERS 1 <span class="comment">// iOS或者模拟器</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;所以我们可以看到，当时macOS系统的时候，就拿地址最后一位是不是1来判断是不是taggedPoint；而对于iOS来说，则判断最高位是不是为1，就拿之前例子里的<code>0xa000000003332313</code>为例，0xa表示为1010，最高位显然为1，所以是这个是TaggedPointer。</p>
+<h1 id="0x02-weak"><a href="#0x02-weak" class="headerlink" title="0x02 weak"></a>0x02 weak</h1><p>&emsp;&emsp;首先，看下如下测试代码</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    __<span class="keyword">weak</span> <span class="built_in">NSObject</span> *obj = [<span class="built_in">NSObject</span> new];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;接着，我们看下其汇编代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">testData`main:</span><br><span class="line">    0x102e1d808 &lt;+0&gt;:   sub    sp, sp, #0x40             ; =0x40 </span><br><span class="line">    0x102e1d80c &lt;+4&gt;:   stp    x29, x30, [sp, #0x30]</span><br><span class="line">    0x102e1d810 &lt;+8&gt;:   add    x29, sp, #0x30            ; =0x30 </span><br><span class="line">    0x102e1d814 &lt;+12&gt;:  adrp   x8, 9</span><br><span class="line">    0x102e1d818 &lt;+16&gt;:  add    x8, x8, #0xf8             ; =0xf8 </span><br><span class="line">    0x102e1d81c &lt;+20&gt;:  adrp   x9, 8</span><br><span class="line">    0x102e1d820 &lt;+24&gt;:  add    x9, x9, #0xf38            ; =0xf38 </span><br><span class="line">    0x102e1d824 &lt;+28&gt;:  adrp   x10, 7</span><br><span class="line">    0x102e1d828 &lt;+32&gt;:  ldr    x10, [x10, #0x68]</span><br><span class="line">    0x102e1d82c &lt;+36&gt;:  add    x11, sp, #0x18            ; =0x18 </span><br><span class="line">    0x102e1d830 &lt;+40&gt;:  stur   wzr, [x29, #-0x4]</span><br><span class="line">    0x102e1d834 &lt;+44&gt;:  stur   w0, [x29, #-0x8]</span><br><span class="line">    0x102e1d838 &lt;+48&gt;:  stur   x1, [x29, #-0x10]</span><br><span class="line">-&gt;  0x102e1d83c &lt;+52&gt;:  ldr    x0, [x8]</span><br><span class="line">    0x102e1d840 &lt;+56&gt;:  ldr    x1, [x9]</span><br><span class="line">    0x102e1d844 &lt;+60&gt;:  str    x11, [sp, #0x10]</span><br><span class="line">    0x102e1d848 &lt;+64&gt;:  blr    x10</span><br><span class="line">    0x102e1d84c &lt;+68&gt;:  ldr    x8, [sp, #0x10]</span><br><span class="line">    0x102e1d850 &lt;+72&gt;:  str    x0, [sp, #0x8]</span><br><span class="line">    0x102e1d854 &lt;+76&gt;:  mov    x0, x8</span><br><span class="line">    0x102e1d858 &lt;+80&gt;:  ldr    x1, [sp, #0x8]</span><br><span class="line">    0x102e1d85c &lt;+84&gt;:  bl     0x102e20e68               ; symbol stub for: objc_initWeak</span><br><span class="line">    0x102e1d860 &lt;+88&gt;:  ldr    x1, [sp, #0x8]</span><br><span class="line">    0x102e1d864 &lt;+92&gt;:  mov    x0, x1</span><br><span class="line">    0x102e1d868 &lt;+96&gt;:  bl     0x102e20eb0               ; symbol stub for: objc_release</span><br><span class="line">    0x102e1d86c &lt;+100&gt;: stur   wzr, [x29, #-0x4]</span><br><span class="line">    0x102e1d870 &lt;+104&gt;: ldr    x0, [sp, #0x10]</span><br><span class="line">    0x102e1d874 &lt;+108&gt;: bl     0x102e20e14               ; symbol stub for: objc_destroyWeak</span><br><span class="line">    0x102e1d878 &lt;+112&gt;: ldur   w0, [x29, #-0x4]</span><br><span class="line">    0x102e1d87c &lt;+116&gt;: ldp    x29, x30, [sp, #0x30]</span><br><span class="line">    0x102e1d880 &lt;+120&gt;: add    sp, sp, #0x40             ; =0x40 </span><br><span class="line">    0x102e1d884 &lt;+124&gt;: ret</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;可以发现，声明<code>__weak</code>后其内部实现过程中调用了<code>objc_initWeak</code>和<code>objc_destroyWeak</code>。但是如果测试例子再修改如下：</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    __<span class="keyword">weak</span> <span class="built_in">NSObject</span> *obj = [<span class="built_in">NSObject</span> new];</span><br><span class="line">    obj = [<span class="built_in">NSObject</span> new];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;汇编代码变化如下，发现再给<code>__weak</code>声明的变量重新赋值的时候调用的是<code>objc_storeWeak</code></p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">testData</span>`main:</span><br><span class="line">    <span class="number">0x102cc5778</span> &lt;+<span class="number">0</span>&gt;:   <span class="keyword">sub </span>   <span class="built_in">sp</span>, <span class="built_in">sp</span>, <span class="number">#0x70</span>             <span class="comment">; =0x70 </span></span><br><span class="line">    <span class="number">0x102cc577c</span> &lt;+<span class="number">4</span>&gt;:   stp    x29, x30, [<span class="built_in">sp</span>, <span class="number">#0x60</span>]</span><br><span class="line">    <span class="number">0x102cc5780</span> &lt;+<span class="number">8</span>&gt;:   <span class="keyword">add </span>   x29, <span class="built_in">sp</span>, <span class="number">#0x60</span>            <span class="comment">; =0x60 </span></span><br><span class="line">    <span class="number">0x102cc5784</span> &lt;+<span class="number">12</span>&gt;:  <span class="keyword">adrp </span>  x8, <span class="number">9</span></span><br><span class="line">    <span class="number">0x102cc5788</span> &lt;+<span class="number">16</span>&gt;:  <span class="keyword">add </span>   x8, x8, <span class="number">#0xf8</span>             <span class="comment">; =0xf8 </span></span><br><span class="line">    <span class="number">0x102cc578c</span> &lt;+<span class="number">20</span>&gt;:  <span class="keyword">adrp </span>  x9, <span class="number">8</span></span><br><span class="line">    <span class="number">0x102cc5790</span> &lt;+<span class="number">24</span>&gt;:  <span class="keyword">add </span>   x9, x9, <span class="number">#0xf38</span>            <span class="comment">; =0xf38 </span></span><br><span class="line">    <span class="number">0x102cc5794</span> &lt;+<span class="number">28</span>&gt;:  <span class="keyword">adrp </span>  x10, <span class="number">7</span></span><br><span class="line">    <span class="number">0x102cc5798</span> &lt;+<span class="number">32</span>&gt;:  <span class="keyword">ldr </span>   x10, [x10, <span class="number">#0x68</span>]</span><br><span class="line">    <span class="number">0x102cc579c</span> &lt;+<span class="number">36</span>&gt;:  <span class="keyword">sub </span>   x11, x29, <span class="number">#0x18</span>           <span class="comment">; =0x18 </span></span><br><span class="line">    <span class="number">0x102cc57a0</span> &lt;+<span class="number">40</span>&gt;:  stur   wzr, [x29, #-<span class="number">0x4</span>]</span><br><span class="line">    <span class="number">0x102cc57a4</span> &lt;+<span class="number">44</span>&gt;:  stur   w0, [x29, #-<span class="number">0x8</span>]</span><br><span class="line">    <span class="number">0x102cc57a8</span> &lt;+<span class="number">48</span>&gt;:  stur   x1, [x29, #-<span class="number">0x10</span>]</span><br><span class="line">-&gt;  <span class="number">0x102cc57ac</span> &lt;+<span class="number">52</span>&gt;:  <span class="keyword">ldr </span>   x0, [x8]</span><br><span class="line">    <span class="number">0x102cc57b0</span> &lt;+<span class="number">56</span>&gt;:  <span class="keyword">ldr </span>   x1, [x9]</span><br><span class="line">    <span class="number">0x102cc57b4</span> &lt;+<span class="number">60</span>&gt;:  <span class="keyword">str </span>   x11, [<span class="built_in">sp</span>, <span class="number">#0x30</span>]</span><br><span class="line">    <span class="number">0x102cc57b8</span> &lt;+<span class="number">64</span>&gt;:  <span class="keyword">str </span>   x10, [<span class="built_in">sp</span>, <span class="number">#0x28</span>]</span><br><span class="line">    <span class="number">0x102cc57bc</span> &lt;+<span class="number">68</span>&gt;:  <span class="keyword">str </span>   x8, [<span class="built_in">sp</span>, <span class="number">#0x20</span>]</span><br><span class="line">    <span class="number">0x102cc57c0</span> &lt;+<span class="number">72</span>&gt;:  <span class="keyword">str </span>   x9, [<span class="built_in">sp</span>, <span class="number">#0x18</span>]</span><br><span class="line">    <span class="number">0x102cc57c4</span> &lt;+<span class="number">76</span>&gt;:  <span class="keyword">blr </span>   x10</span><br><span class="line">    <span class="number">0x102cc57c8</span> &lt;+<span class="number">80</span>&gt;:  <span class="keyword">ldr </span>   x8, [<span class="built_in">sp</span>, <span class="number">#0x30</span>]</span><br><span class="line">    <span class="number">0x102cc57cc</span> &lt;+<span class="number">84</span>&gt;:  <span class="keyword">str </span>   x0, [<span class="built_in">sp</span>, <span class="number">#0x10</span>]</span><br><span class="line">    <span class="number">0x102cc57d0</span> &lt;+<span class="number">88</span>&gt;:  <span class="keyword">mov </span>   x0, x8</span><br><span class="line">    <span class="number">0x102cc57d4</span> &lt;+<span class="number">92</span>&gt;:  <span class="keyword">ldr </span>   x1, [<span class="built_in">sp</span>, <span class="number">#0x10</span>]</span><br><span class="line">    <span class="number">0x102cc57d8</span> &lt;+<span class="number">96</span>&gt;:  <span class="keyword">bl </span>    <span class="number">0x102cc8e44</span>               <span class="comment">; symbol stub for: objc_initWeak</span></span><br><span class="line">    <span class="number">0x102cc57dc</span> &lt;+<span class="number">100</span>&gt;: <span class="keyword">ldr </span>   x1, [<span class="built_in">sp</span>, <span class="number">#0x10</span>]</span><br><span class="line">    <span class="number">0x102cc57e0</span> &lt;+<span class="number">104</span>&gt;: <span class="keyword">mov </span>   x0, x1</span><br><span class="line">    <span class="number">0x102cc57e4</span> &lt;+<span class="number">108</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x102cc8e8c</span>               <span class="comment">; symbol stub for: objc_release</span></span><br><span class="line">    <span class="number">0x102cc57e8</span> &lt;+<span class="number">112</span>&gt;: <span class="keyword">ldr </span>   x8, [<span class="built_in">sp</span>, <span class="number">#0x20</span>]</span><br><span class="line">    <span class="number">0x102cc57ec</span> &lt;+<span class="number">116</span>&gt;: <span class="keyword">ldr </span>   x0, [x8]</span><br><span class="line">    <span class="number">0x102cc57f0</span> &lt;+<span class="number">120</span>&gt;: <span class="keyword">ldr </span>   x9, [<span class="built_in">sp</span>, <span class="number">#0x18</span>]</span><br><span class="line">    <span class="number">0x102cc57f4</span> &lt;+<span class="number">124</span>&gt;: <span class="keyword">ldr </span>   x1, [x9]</span><br><span class="line">    <span class="number">0x102cc57f8</span> &lt;+<span class="number">128</span>&gt;: <span class="keyword">ldr </span>   x10, [<span class="built_in">sp</span>, <span class="number">#0x28</span>]</span><br><span class="line">    <span class="number">0x102cc57fc</span> &lt;+<span class="number">132</span>&gt;: <span class="keyword">blr </span>   x10</span><br><span class="line">    <span class="number">0x102cc5800</span> &lt;+<span class="number">136</span>&gt;: <span class="keyword">str </span>   x0, [<span class="built_in">sp</span>, <span class="number">#0x8</span>]</span><br><span class="line">    <span class="number">0x102cc5804</span> &lt;+<span class="number">140</span>&gt;: <span class="keyword">b </span>     <span class="number">0x102cc5808</span>               <span class="comment">; &lt;+144&gt; at main.m</span></span><br><span class="line">    <span class="number">0x102cc5808</span> &lt;+<span class="number">144</span>&gt;: <span class="keyword">sub </span>   x8, x29, <span class="number">#0x18</span>            <span class="comment">; =0x18 </span></span><br><span class="line">    <span class="number">0x102cc580c</span> &lt;+<span class="number">148</span>&gt;: <span class="keyword">mov </span>   x0, x8</span><br><span class="line">    <span class="number">0x102cc5810</span> &lt;+<span class="number">152</span>&gt;: <span class="keyword">ldr </span>   x1, [<span class="built_in">sp</span>, <span class="number">#0x8</span>]</span><br><span class="line">    <span class="number">0x102cc5814</span> &lt;+<span class="number">156</span>&gt;: <span class="keyword">str </span>   x8, [<span class="built_in">sp</span>]</span><br><span class="line">    <span class="number">0x102cc5818</span> &lt;+<span class="number">160</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x102cc8ee0</span>               <span class="comment">; symbol stub for: objc_storeWeak</span></span><br><span class="line">    <span class="number">0x102cc581c</span> &lt;+<span class="number">164</span>&gt;: <span class="keyword">ldr </span>   x1, [<span class="built_in">sp</span>, <span class="number">#0x8</span>]</span><br><span class="line">    <span class="number">0x102cc5820</span> &lt;+<span class="number">168</span>&gt;: <span class="keyword">mov </span>   x0, x1</span><br><span class="line">    <span class="number">0x102cc5824</span> &lt;+<span class="number">172</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x102cc8e8c</span>               <span class="comment">; symbol stub for: objc_release</span></span><br><span class="line">    <span class="number">0x102cc5828</span> &lt;+<span class="number">176</span>&gt;: stur   wzr, [x29, #-<span class="number">0x4</span>]</span><br><span class="line">    <span class="number">0x102cc582c</span> &lt;+<span class="number">180</span>&gt;: <span class="keyword">ldr </span>   x0, [<span class="built_in">sp</span>]</span><br><span class="line">    <span class="number">0x102cc5830</span> &lt;+<span class="number">184</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x102cc8df0</span>               <span class="comment">; symbol stub for: objc_destroyWeak</span></span><br><span class="line">    <span class="number">0x102cc5834</span> &lt;+<span class="number">188</span>&gt;: ldur   w0, [x29, #-<span class="number">0x4</span>]</span><br><span class="line">    <span class="number">0x102cc5838</span> &lt;+<span class="number">192</span>&gt;: ldp    x29, x30, [<span class="built_in">sp</span>, <span class="number">#0x60</span>]</span><br><span class="line">    <span class="number">0x102cc583c</span> &lt;+<span class="number">196</span>&gt;: <span class="keyword">add </span>   <span class="built_in">sp</span>, <span class="built_in">sp</span>, <span class="number">#0x70</span>             <span class="comment">; =0x70 </span></span><br><span class="line">    <span class="number">0x102cc5840</span> &lt;+<span class="number">200</span>&gt;: ret    </span><br><span class="line">    <span class="number">0x102cc5844</span> &lt;+<span class="number">204</span>&gt;: <span class="keyword">sub </span>   x8, x29, <span class="number">#0x18</span>            <span class="comment">; =0x18 </span></span><br><span class="line">    <span class="number">0x102cc5848</span> &lt;+<span class="number">208</span>&gt;: <span class="keyword">mov </span>   x9, x1</span><br><span class="line">    <span class="number">0x102cc584c</span> &lt;+<span class="number">212</span>&gt;: stur   x0, [x29, #-<span class="number">0x20</span>]</span><br><span class="line">    <span class="number">0x102cc5850</span> &lt;+<span class="number">216</span>&gt;: stur   w9, [x29, #-<span class="number">0x24</span>]</span><br><span class="line">    <span class="number">0x102cc5854</span> &lt;+<span class="number">220</span>&gt;: <span class="keyword">mov </span>   x0, x8</span><br><span class="line">    <span class="number">0x102cc5858</span> &lt;+<span class="number">224</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x102cc8df0</span>               <span class="comment">; symbol stub for: objc_destroyWeak</span></span><br><span class="line">    <span class="number">0x102cc585c</span> &lt;+<span class="number">228</span>&gt;: ldur   x0, [x29, #-<span class="number">0x20</span>]</span><br><span class="line">    <span class="number">0x102cc5860</span> &lt;+<span class="number">232</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x102cc8c94</span>               <span class="comment">; symbol stub for: _Unwind_Resume</span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;查看源码比较下<code>objc_initWeak</code>和<code>objc_storeWeak</code>的区别</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">id <span class="title">objc_initWeak</span><span class="params">(id *location, id newObj)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!newObj) &#123;</span><br><span class="line">        *location = nil;</span><br><span class="line">        <span class="keyword">return</span> nil;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> storeWeak&lt;DontHaveOld, DoHaveNew, DoCrashIfDeallocating&gt;</span><br><span class="line">        (location, (objc_object*)newObj);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">id <span class="title">objc_storeWeak</span><span class="params">(id *location, id newObj)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> storeWeak&lt;DoHaveOld, DoHaveNew, DoCrashIfDeallocating&gt;</span><br><span class="line">        (location, (objc_object *)newObj);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;虽然都是统一调用<code>storeWeak</code>函数，两者之间只有一个区分，就是<code>objc_initWeak</code>是没有旧值的，而<code>objc_storeWeak</code>是有旧值的，即<code>DontHaveOld</code>和<code>DoHaveOld</code>的区别。</p>
+<p>&emsp;&emsp;最后会调用<code>objc_destroyWeak</code>函数进行销毁所有指向对象的弱引用对象。销毁的时候，告诉<code>storeWeak</code>函数没有新值。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">objc_destroyWeak</span><span class="params">(id *location)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (<span class="keyword">void</span>)storeWeak&lt;DoHaveOld, DontHaveNew, DontCrashIfDeallocating&gt;</span><br><span class="line">        (location, nil);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="storeWeak"><a href="#storeWeak" class="headerlink" title="storeWeak"></a>storeWeak</h3><p>&emsp;&emsp;我们直接来到源码，看下其实现</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;HaveOld haveOld, HaveNew haveNew,</span><br><span class="line">          CrashIfDeallocating crashIfDeallocating&gt;</span><br><span class="line"><span class="function"><span class="keyword">static</span> id <span class="title">storeWeak</span><span class="params">(id *location, objc_object *newObj)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    assert(haveOld  ||  haveNew);</span><br><span class="line">    <span class="keyword">if</span> (!haveNew) assert(newObj == nil);</span><br><span class="line"></span><br><span class="line">    Class previouslyInitializedClass = nil;</span><br><span class="line">    id oldObj;</span><br><span class="line">    SideTable *oldTable;</span><br><span class="line">    SideTable *newTable;</span><br><span class="line">              </span><br><span class="line"> retry:</span><br><span class="line">    <span class="comment">// 如果是旧值，拿到旧值的那个哈希表</span></span><br><span class="line">    <span class="keyword">if</span> (haveOld) &#123;</span><br><span class="line">        <span class="comment">// *location 赋值给oldObj</span></span><br><span class="line">        oldObj = *location;</span><br><span class="line">        oldTable = &amp;SideTables()[oldObj];</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        oldTable = nil;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 如果是新值，拿到新值的那个哈希表</span></span><br><span class="line">    <span class="keyword">if</span> (haveNew) &#123;</span><br><span class="line">        newTable = &amp;SideTables()[newObj];</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        newTable = nil;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    SideTable::lockTwo&lt;haveOld, haveNew&gt;(oldTable, newTable);</span><br><span class="line">	<span class="comment">// 如果是旧值。之前*location赋值给过oldObj，如果不一致，说明有别的线程进来改过了，则重新尝试。</span></span><br><span class="line">    <span class="keyword">if</span> (haveOld  &amp;&amp;  *location != oldObj) &#123;</span><br><span class="line">        SideTable::unlockTwo&lt;haveOld, haveNew&gt;(oldTable, newTable);</span><br><span class="line">        <span class="keyword">goto</span> retry;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果是新值则需要判断有没有调用过initialized方法，如果没有这里进行调用</span></span><br><span class="line">    <span class="keyword">if</span> (haveNew  &amp;&amp;  newObj) &#123;</span><br><span class="line">        Class cls = newObj-&gt;getIsa();</span><br><span class="line">        <span class="keyword">if</span> (cls != previouslyInitializedClass  &amp;&amp;  </span><br><span class="line">            !((objc_class *)cls)-&gt;isInitialized()) </span><br><span class="line">        &#123;</span><br><span class="line">            SideTable::unlockTwo&lt;haveOld, haveNew&gt;(oldTable, newTable);</span><br><span class="line">            _class_initialize(_class_getNonMetaClass(cls, (id)newObj));</span><br><span class="line"></span><br><span class="line">            previouslyInitializedClass = cls;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">goto</span> retry;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清理旧值，解除注册</span></span><br><span class="line">    <span class="keyword">if</span> (haveOld) &#123;</span><br><span class="line">        weak_unregister_no_lock(&amp;oldTable-&gt;weak_table, oldObj, location);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 注册新值</span></span><br><span class="line">    <span class="keyword">if</span> (haveNew) &#123;</span><br><span class="line">        newObj = (objc_object *)</span><br><span class="line">            <span class="comment">// newObject为所赋的值。比如例子中的[NSObject new], location为例子中的NSObject *obj</span></span><br><span class="line">            weak_register_no_lock(&amp;newTable-&gt;weak_table, (id)newObj, location, </span><br><span class="line">                                  crashIfDeallocating);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 设置isa的weakly_referenced位为true</span></span><br><span class="line">        <span class="keyword">if</span> (newObj  &amp;&amp;  !newObj-&gt;isTaggedPointer()) &#123;</span><br><span class="line">            newObj-&gt;setWeaklyReferenced_nolock();</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        *location = (id)newObj;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    SideTable::unlockTwo&lt;haveOld, haveNew&gt;(oldTable, newTable);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> (id)newObj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="SlideTable"><a href="#SlideTable" class="headerlink" title="SlideTable"></a>SlideTable</h3><p>&emsp;&emsp;定义如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">SideTable</span> &#123;</span></span><br><span class="line">    <span class="keyword">spinlock_t</span> slock;</span><br><span class="line">    RefcountMap refcnts; <span class="comment">// 引用的数量</span></span><br><span class="line">    <span class="keyword">weak_table_t</span> weak_table; <span class="comment">// 弱引用表，保存着所有的关联着对象的弱引用地址</span></span><br><span class="line">    </span><br><span class="line">    ... ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">weak_table_t</span> &#123;</span></span><br><span class="line">    <span class="keyword">weak_entry_t</span> *weak_entries; <span class="comment">// 上面说的保存的地址就是保存在这里</span></span><br><span class="line">    <span class="keyword">size_t</span>    num_entries;</span><br><span class="line">    <span class="keyword">uintptr_t</span> mask;</span><br><span class="line">    <span class="keyword">uintptr_t</span> max_hash_displacement;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">weak_entry_t</span> &#123;</span></span><br><span class="line">    DisguisedPtr&lt;objc_object&gt; referent;</span><br><span class="line">    <span class="keyword">union</span> &#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            <span class="keyword">weak_referrer_t</span> *referrers; <span class="comment">// 关联着对象的弱引用地址保存在这里</span></span><br><span class="line">            <span class="keyword">uintptr_t</span>        out_of_line_ness : <span class="number">2</span>;</span><br><span class="line">            <span class="keyword">uintptr_t</span>        num_refs : PTR_MINUS_2;</span><br><span class="line">            <span class="keyword">uintptr_t</span>        mask;</span><br><span class="line">            <span class="keyword">uintptr_t</span>        max_hash_displacement;</span><br><span class="line">        &#125;;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            <span class="keyword">weak_referrer_t</span>  inline_referrers[WEAK_INLINE_COUNT];</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">out_of_line</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> (out_of_line_ness == REFERRERS_OUT_OF_LINE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">weak_entry_t</span>&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> <span class="keyword">weak_entry_t</span>&amp; other) &#123;</span><br><span class="line">        <span class="built_in">memcpy</span>(<span class="keyword">this</span>, &amp;other, <span class="keyword">sizeof</span>(other));</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">weak_entry_t</span>(objc_object *newReferent, objc_object **newReferrer)</span><br><span class="line">        : referent(newReferent)</span><br><span class="line">    &#123;</span><br><span class="line">        inline_referrers[<span class="number">0</span>] = newReferrer;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; WEAK_INLINE_COUNT; i++) &#123;</span><br><span class="line">            inline_referrers[i] = nil;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;具体解释是这样的，在我们的例子中<code>__weak NSObject *obj = [NSObject new];</code>，<code>[NSObject new]</code>新构造了一个对象，这个对象有个SlideTable维护弱引用表，表里保存的就是<code>NSObject *obj</code>变量的地址。</p>
+<h3 id="weak-unregister-no-lock"><a href="#weak-unregister-no-lock" class="headerlink" title="weak_unregister_no_lock"></a>weak_unregister_no_lock</h3><p>&emsp;&emsp;源码先行</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">weak_unregister_no_lock</span><span class="params">(<span class="keyword">weak_table_t</span> *weak_table, id referent_id, </span></span></span><br><span class="line"><span class="function"><span class="params">                        id *referrer_id)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    objc_object *referent = (objc_object *)referent_id;</span><br><span class="line">    objc_object **referrer = (objc_object **)referrer_id;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">weak_entry_t</span> *entry;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!referent) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((entry = weak_entry_for_referent(weak_table, referent))) &#123;</span><br><span class="line">        <span class="comment">// 解除引用关联，referer为引用对象的地址，即例子中的NSObject *obj变量的地址</span></span><br><span class="line">        remove_referrer(entry, referrer);</span><br><span class="line">        <span class="keyword">bool</span> empty = <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">if</span> (entry-&gt;out_of_line()  &amp;&amp;  entry-&gt;num_refs != <span class="number">0</span>) &#123;</span><br><span class="line">            empty = <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; WEAK_INLINE_COUNT; i++) &#123;</span><br><span class="line">                <span class="keyword">if</span> (entry-&gt;inline_referrers[i]) &#123;</span><br><span class="line">                    empty = <span class="literal">false</span>; </span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">// 如果弱引用对象没有关联的对象了，表也可以删了</span></span><br><span class="line">        <span class="keyword">if</span> (empty) &#123;</span><br><span class="line">            weak_entry_remove(weak_table, entry);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;具体如何解除引用过程如下，</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">remove_referrer</span><span class="params">(<span class="keyword">weak_entry_t</span> *entry, objc_object **old_referrer)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">    <span class="keyword">size_t</span> begin = w_hash_pointer(old_referrer) &amp; (entry-&gt;mask);</span><br><span class="line">    <span class="keyword">size_t</span> index = begin;</span><br><span class="line">    <span class="keyword">size_t</span> hash_displacement = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// 入参old_referrer在我们的例子中就是NSObject *obj变量的地址。然后查找表中的每个引用数据，如果找到的数据跟NSObject *obj变量的地址相等，就将其置为nil</span></span><br><span class="line">    <span class="keyword">while</span> (entry-&gt;referrers[index] != old_referrer) &#123;</span><br><span class="line">        index = (index+<span class="number">1</span>) &amp; entry-&gt;mask;</span><br><span class="line">        <span class="keyword">if</span> (index == begin) bad_weak_table(entry);</span><br><span class="line">        hash_displacement++;</span><br><span class="line">        <span class="keyword">if</span> (hash_displacement &gt; entry-&gt;max_hash_displacement) &#123;</span><br><span class="line">            _objc_inform(<span class="string">"Attempted to unregister unknown __weak variable "</span></span><br><span class="line">                         <span class="string">"at %p. This is probably incorrect use of "</span></span><br><span class="line">                         <span class="string">"objc_storeWeak() and objc_loadWeak(). "</span></span><br><span class="line">                         <span class="string">"Break on objc_weak_error to debug.\n"</span>, </span><br><span class="line">                         old_referrer);</span><br><span class="line">            objc_weak_error();</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    entry-&gt;referrers[index] = nil;</span><br><span class="line">    entry-&gt;num_refs--;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="weak-register-no-lock"><a href="#weak-register-no-lock" class="headerlink" title="weak_register_no_lock"></a>weak_register_no_lock</h3><p>&emsp;&emsp;还是先看源码</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">id <span class="title">weak_register_no_lock</span><span class="params">(<span class="keyword">weak_table_t</span> *weak_table, id referent_id, </span></span></span><br><span class="line"><span class="function"><span class="params">                      id *referrer_id, <span class="keyword">bool</span> crashIfDeallocating)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    objc_object *referent = (objc_object *)referent_id;</span><br><span class="line">    objc_object **referrer = (objc_object **)referrer_id;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!referent  ||  referent-&gt;isTaggedPointer()) <span class="keyword">return</span> referent_id;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ensure that the referenced object is viable</span></span><br><span class="line">    <span class="keyword">bool</span> deallocating;</span><br><span class="line">    <span class="keyword">if</span> (!referent-&gt;ISA()-&gt;hasCustomRR()) &#123;</span><br><span class="line">        deallocating = referent-&gt;rootIsDeallocating();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        BOOL (*allowsWeakReference)(objc_object *, SEL) = </span><br><span class="line">            (BOOL(*)(objc_object *, SEL))</span><br><span class="line">            object_getMethodImplementation((id)referent, </span><br><span class="line">                                           SEL_allowsWeakReference);</span><br><span class="line">        <span class="keyword">if</span> ((IMP)allowsWeakReference == _objc_msgForward) &#123;</span><br><span class="line">            <span class="keyword">return</span> nil;</span><br><span class="line">        &#125;</span><br><span class="line">        deallocating =</span><br><span class="line">            ! (*allowsWeakReference)(referent, SEL_allowsWeakReference);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (deallocating) &#123;</span><br><span class="line">        <span class="keyword">if</span> (crashIfDeallocating) &#123;</span><br><span class="line">            _objc_fatal(<span class="string">"Cannot form weak reference to instance (%p) of "</span></span><br><span class="line">                        <span class="string">"class %s. It is possible that this object was "</span></span><br><span class="line">                        <span class="string">"over-released, or is in the process of deallocation."</span>,</span><br><span class="line">                        (<span class="keyword">void</span>*)referent, object_getClassName((id)referent));</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> nil;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">weak_entry_t</span> *entry;</span><br><span class="line">    <span class="comment">// 结合例子来说，就是找到[NSObject new]新创建出对象的weak_entry_t，然后把NSObject *obj变量的地址加入到这个表中，这样做的目的就是，当[NSObject new]的对象销毁后，只要遍历这个对象里的弱引用表，就可以把所有指向这块内存的变量地址都可以置nil。</span></span><br><span class="line">    <span class="keyword">if</span> ((entry = weak_entry_for_referent(weak_table, referent))) &#123;</span><br><span class="line">        append_referrer(entry, referrer);</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">weak_entry_t</span> new_entry(referent, referrer);</span><br><span class="line">        weak_grow_maybe(weak_table);</span><br><span class="line">        weak_entry_insert(weak_table, &amp;new_entry);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> referent_id;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="object-dispose"><a href="#object-dispose" class="headerlink" title="object_dispose"></a>object_dispose</h3><p>&emsp;&emsp;当一个对象销毁时，会调用<code>object_dispose</code>函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">id <span class="title">object_dispose</span><span class="params">(id obj)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!obj) <span class="keyword">return</span> nil;</span><br><span class="line"></span><br><span class="line">    objc_destructInstance(obj);    </span><br><span class="line">    <span class="built_in">free</span>(obj);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> nil;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">objc_destructInstance</span><span class="params">(id obj)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (obj) &#123;</span><br><span class="line">        <span class="keyword">bool</span> cxx = obj-&gt;hasCxxDtor();</span><br><span class="line">        <span class="keyword">bool</span> assoc = obj-&gt;hasAssociatedObjects();</span><br><span class="line">		<span class="comment">// 是否c++，是的话调用析构函数</span></span><br><span class="line">        <span class="keyword">if</span> (cxx) object_cxxDestruct(obj);</span><br><span class="line">        <span class="comment">// 是否有关联属性，是的话移出关联属性</span></span><br><span class="line">        <span class="keyword">if</span> (assoc) _object_remove_assocations(obj);</span><br><span class="line">        <span class="comment">// 清理并销毁对象</span></span><br><span class="line">        obj-&gt;clearDeallocating();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">inline</span> <span class="keyword">void</span> objc_object::clearDeallocating()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (slowpath(!isa.nonpointer)) &#123;</span><br><span class="line">        sidetable_clearDeallocating();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (slowpath(isa.weakly_referenced  ||  isa.has_sidetable_rc)) &#123;</span><br><span class="line">		<span class="comment">// 如果是弱引用对象</span></span><br><span class="line">        clearDeallocating_slow();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    assert(!sidetable_present());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> objc_object::clearDeallocating_slow()</span><br><span class="line">&#123;</span><br><span class="line">    assert(isa.nonpointer  &amp;&amp;  (isa.weakly_referenced || isa.has_sidetable_rc));</span><br><span class="line"></span><br><span class="line">    SideTable&amp; table = SideTables()[<span class="keyword">this</span>];</span><br><span class="line">    table.lock();</span><br><span class="line">    <span class="keyword">if</span> (isa.weakly_referenced) &#123;</span><br><span class="line">        weak_clear_no_lock(&amp;table.weak_table, (id)<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (isa.has_sidetable_rc) &#123;</span><br><span class="line">        table.refcnts.erase(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    table.unlock();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;最终如果是弱引用对象会来到<code>weak_clear_no_lock</code>函数，里面遍历所有指向此对象的对象地址，然后都置为nil。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">weak_clear_no_lock</span><span class="params">(<span class="keyword">weak_table_t</span> *weak_table, id referent_id)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    objc_object *referent = (objc_object *)referent_id;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">weak_entry_t</span> *entry = weak_entry_for_referent(weak_table, referent);</span><br><span class="line">    <span class="keyword">if</span> (entry == nil) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">weak_referrer_t</span> *referrers;</span><br><span class="line">    <span class="keyword">size_t</span> count;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (entry-&gt;out_of_line()) &#123;</span><br><span class="line">        referrers = entry-&gt;referrers;</span><br><span class="line">        count = TABLE_SIZE(entry);</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        referrers = entry-&gt;inline_referrers;</span><br><span class="line">        count = WEAK_INLINE_COUNT;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; count; ++i) &#123;</span><br><span class="line">        objc_object **referrer = referrers[i];</span><br><span class="line">        <span class="keyword">if</span> (referrer) &#123;</span><br><span class="line">            <span class="keyword">if</span> (*referrer == referent) &#123;</span><br><span class="line">                *referrer = nil;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span> (*referrer) &#123;</span><br><span class="line">                _objc_inform(<span class="string">"__weak variable at %p holds %p instead of %p. "</span></span><br><span class="line">                             <span class="string">"This is probably incorrect use of "</span></span><br><span class="line">                             <span class="string">"objc_storeWeak() and objc_loadWeak(). "</span></span><br><span class="line">                             <span class="string">"Break on objc_weak_error to debug.\n"</span>, </span><br><span class="line">                             referrer, (<span class="keyword">void</span>*)*referrer, (<span class="keyword">void</span>*)referent);</span><br><span class="line">                objc_weak_error();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    weak_entry_remove(weak_table, entry);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="0x03-Copy"><a href="#0x03-Copy" class="headerlink" title="0x03 Copy"></a>0x03 Copy</h1><h3 id="NSString"><a href="#NSString" class="headerlink" title="NSString"></a>NSString</h3><p>&emsp;&emsp;首先，看下<code>NSString</code>相关的例子</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="built_in">NSString</span> *a = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"1234567890"</span>];</span><br><span class="line">    <span class="built_in">NSString</span> *b = [a <span class="keyword">copy</span>];</span><br><span class="line">    <span class="built_in">NSString</span> *c = [a mutableCopy];</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"%p -- %p -- %p"</span>, a, b, c);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 打印出的结果</span></span><br><span class="line"><span class="number">0x1d02202c0</span> -- <span class="number">0x1d02202c0</span> -- <span class="number">0x1d0445cd0</span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;我们发现对于不可变的<code>NSString</code>，<code>copy</code>出来的是不可变对象，并且是浅拷贝，因为地址相同；<code>mutableCopy</code>出来的是可变对象，而且是深拷贝，地址都不同了。</p>
+<h3 id="NSMutableString"><a href="#NSMutableString" class="headerlink" title="NSMutableString"></a>NSMutableString</h3><figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="built_in">NSMutableString</span> *a = [[<span class="built_in">NSMutableString</span> alloc] initWithString:<span class="string">@"1234567890"</span>];</span><br><span class="line">    <span class="built_in">NSString</span> *b = [a <span class="keyword">copy</span>];</span><br><span class="line">    <span class="built_in">NSMutableString</span> *c = [a mutableCopy];</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"%p -- %p -- %p"</span>, a, b, c);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 打印出的结果</span></span><br><span class="line"><span class="number">0x1d425d5e0</span> -- <span class="number">0x1d422bfa0</span> -- <span class="number">0x1d425d5b0</span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;对于可变的<code>NSMutableString</code>，<code>copy</code>出来的是不可变对象，并且是深拷贝；<code>mutableCopy</code>出来的是可变对象，但也是深拷贝。</p>
+<p>&emsp;&emsp;<code>NSArray</code>、<code>NSMutableArray</code>、<code>NSDictionay</code>、<code>NSMutableDictionary</code>其实也类似，具体例子不表述了，总结规律如下：</p>
+<ul>
+<li>不可变对象的<code>copy</code>出来的是不可变对象，且是浅拷贝；<code>mutableCopy</code>的是可变对象，且是深拷贝。</li>
+<li>可变对象的<code>copy</code>出来的是不可变对象，但是深拷贝；<code>mutableCopy</code>的是可变对象，且也是深拷贝</li>
+</ul>
+<h1 id="0x04-NSProxy"><a href="#0x04-NSProxy" class="headerlink" title="0x04 NSProxy"></a>0x04 NSProxy</h1><p>&emsp;&emsp;在定时器相关的初始化方法中，如果使用的是下面这样的初始化方法，那么由于控制器<code>self</code>本身强引用定时器，而<code>target</code>又会把<code>self</code>传入定时器内部，而在定时器内部又会对<code>self</code>做强引用，这样就造成了循环引用。</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">self</span>.timer = [<span class="built_in">NSTimer</span> timerWithTimeInterval:<span class="number">1.</span>f target:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(timerFire) userInfo:<span class="literal">nil</span> repeats:<span class="literal">YES</span>];</span><br><span class="line">    </span><br><span class="line"><span class="keyword">self</span>.displayLink = [<span class="built_in">CADisplayLink</span> displayLinkWithTarget:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(displayLinkFire)];</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;解决方法，使用NSProxy，通过这个中间介打破强引用关系，然后再利用消息转发，将方法的实现还是转发回原来的target上。</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">MyProxy</span> : <span class="title">NSProxy</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">weak</span>) <span class="keyword">id</span> target;</span><br><span class="line"></span><br><span class="line">+ (<span class="keyword">id</span>)proxyWithTarget:(<span class="keyword">id</span>)target;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">MyProxy</span></span></span><br><span class="line"></span><br><span class="line">+ (<span class="keyword">id</span>)proxyWithTarget:(<span class="keyword">id</span>)target &#123;</span><br><span class="line">    MyProxy *proxy = [MyProxy alloc];</span><br><span class="line">    proxy.target = target;</span><br><span class="line">    <span class="keyword">return</span> proxy;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="built_in">NSMethodSignature</span> *)methodSignatureForSelector:(SEL)sel &#123;</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span>.target methodSignatureForSelector:sel];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)forwardInvocation:(<span class="built_in">NSInvocation</span> *)invocation &#123;</span><br><span class="line">    [invocation invokeWithTarget:<span class="keyword">self</span>.target];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line">   </span><br><span class="line"> <span class="comment">// 使用自定义的Proxy   </span></span><br><span class="line"><span class="keyword">self</span>.timer = [<span class="built_in">NSTimer</span> timerWithTimeInterval:<span class="number">1.</span>f target:[MyProxy proxyWithTarget:<span class="keyword">self</span>] selector:<span class="keyword">@selector</span>(timerFire) userInfo:<span class="literal">nil</span> repeats:<span class="literal">YES</span>];</span><br><span class="line">    </span><br><span class="line"><span class="keyword">self</span>.displayLink = [<span class="built_in">CADisplayLink</span> displayLinkWithTarget:[MyProxy proxyWithTarget:<span class="keyword">self</span>] selector:<span class="keyword">@selector</span>(displayLinkFire)];</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;那么为什么不是继承<code>NSObject</code>呢，这是因为这样就会走一遍消息转发流程，具体在<code>runtime</code>篇已经讲过，效率没有直接使用<code>NSProxy</code>高。</p>
+<p>&emsp;&emsp;当然，这样的使用场景也不止在定时器上，别的地方遇到类似的互相强引用，也可以使用这样的方法解决。</p>
+<h1 id="0x05-autoreleasepool"><a href="#0x05-autoreleasepool" class="headerlink" title="0x05 autoreleasepool"></a>0x05 autoreleasepool</h1><p>&emsp;&emsp;我们的示例代码如下</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">NSInteger</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++) &#123;</span><br><span class="line">            <span class="built_in">NSObject</span> *obj = [<span class="built_in">NSObject</span> new];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;转换汇编后，我们可以看到<code>@autoreleasepool</code>实际会被转换为<code>objc_autoreleasePoolPush</code>和<code>objc_autoreleasePoolPop</code>两个函数，而<code>@autoreleasepool</code>中间的代码则被包在这两个函数中间。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">testData</span>`main:</span><br><span class="line">    <span class="number">0x10019d7d0</span> &lt;+<span class="number">0</span>&gt;:   <span class="keyword">sub </span>   <span class="built_in">sp</span>, <span class="built_in">sp</span>, <span class="number">#0x70</span>             <span class="comment">; =0x70 </span></span><br><span class="line">    <span class="number">0x10019d7d4</span> &lt;+<span class="number">4</span>&gt;:   stp    x29, x30, [<span class="built_in">sp</span>, <span class="number">#0x60</span>]</span><br><span class="line">    <span class="number">0x10019d7d8</span> &lt;+<span class="number">8</span>&gt;:   <span class="keyword">add </span>   x29, <span class="built_in">sp</span>, <span class="number">#0x60</span>            <span class="comment">; =0x60 </span></span><br><span class="line">    <span class="number">0x10019d7dc</span> &lt;+<span class="number">12</span>&gt;:  <span class="keyword">mov </span>   x8, <span class="number">#0x0</span></span><br><span class="line">    <span class="number">0x10019d7e0</span> &lt;+<span class="number">16</span>&gt;:  <span class="keyword">adrp </span>  x9, <span class="number">9</span></span><br><span class="line">    <span class="number">0x10019d7e4</span> &lt;+<span class="number">20</span>&gt;:  <span class="keyword">add </span>   x9, x9, <span class="number">#0xf0</span>             <span class="comment">; =0xf0 </span></span><br><span class="line">    <span class="number">0x10019d7e8</span> &lt;+<span class="number">24</span>&gt;:  <span class="keyword">adrp </span>  x10, <span class="number">8</span></span><br><span class="line">    <span class="number">0x10019d7ec</span> &lt;+<span class="number">28</span>&gt;:  <span class="keyword">add </span>   x10, x10, <span class="number">#0xf30</span>          <span class="comment">; =0xf30 </span></span><br><span class="line">    <span class="number">0x10019d7f0</span> &lt;+<span class="number">32</span>&gt;:  <span class="keyword">adrp </span>  x11, <span class="number">7</span></span><br><span class="line">    <span class="number">0x10019d7f4</span> &lt;+<span class="number">36</span>&gt;:  <span class="keyword">ldr </span>   x11, [x11, <span class="number">#0x68</span>]</span><br><span class="line">    <span class="number">0x10019d7f8</span> &lt;+<span class="number">40</span>&gt;:  stur   wzr, [x29, #-<span class="number">0x4</span>]</span><br><span class="line">    <span class="number">0x10019d7fc</span> &lt;+<span class="number">44</span>&gt;:  stur   w0, [x29, #-<span class="number">0x8</span>]</span><br><span class="line">    <span class="number">0x10019d800</span> &lt;+<span class="number">48</span>&gt;:  stur   x1, [x29, #-<span class="number">0x10</span>]</span><br><span class="line">-&gt;  <span class="number">0x10019d804</span> &lt;+<span class="number">52</span>&gt;:  stur   x8, [x29, #-<span class="number">0x28</span>]</span><br><span class="line">    <span class="number">0x10019d808</span> &lt;+<span class="number">56</span>&gt;:  <span class="keyword">str </span>   x10, [<span class="built_in">sp</span>, <span class="number">#0x30</span>]</span><br><span class="line">    <span class="number">0x10019d80c</span> &lt;+<span class="number">60</span>&gt;:  <span class="keyword">str </span>   x11, [<span class="built_in">sp</span>, <span class="number">#0x28</span>]</span><br><span class="line">    <span class="number">0x10019d810</span> &lt;+<span class="number">64</span>&gt;:  <span class="keyword">str </span>   x9, [<span class="built_in">sp</span>, <span class="number">#0x20</span>]</span><br><span class="line">    <span class="number">0x10019d814</span> &lt;+<span class="number">68</span>&gt;:  <span class="keyword">bl </span>    <span class="number">0x1001a0e14</span>               <span class="comment">; symbol stub for: objc_autoreleasePoolPush</span></span><br><span class="line">    <span class="number">0x10019d818</span> &lt;+<span class="number">72</span>&gt;:  stur   xzr, [x29, #-<span class="number">0x18</span>]</span><br><span class="line">    <span class="number">0x10019d81c</span> &lt;+<span class="number">76</span>&gt;:  <span class="keyword">str </span>   x0, [<span class="built_in">sp</span>, <span class="number">#0x18</span>]</span><br><span class="line">    <span class="number">0x10019d820</span> &lt;+<span class="number">80</span>&gt;:  <span class="keyword">mov </span>   x8, <span class="number">#0x64</span></span><br><span class="line">    <span class="number">0x10019d824</span> &lt;+<span class="number">84</span>&gt;:  ldur   x9, [x29, #-<span class="number">0x18</span>]</span><br><span class="line">    <span class="number">0x10019d828</span> &lt;+<span class="number">88</span>&gt;:  <span class="keyword">cmp </span>   x9, x8</span><br><span class="line">    <span class="number">0x10019d82c</span> &lt;+<span class="number">92</span>&gt;:  cset   w10, lt</span><br><span class="line">    <span class="number">0x10019d830</span> &lt;+<span class="number">96</span>&gt;:  tbnz   w10, <span class="number">#0x0</span>, <span class="number">0x10019d838</span>    <span class="comment">; &lt;+104&gt; at main.m</span></span><br><span class="line">    <span class="number">0x10019d834</span> &lt;+<span class="number">100</span>&gt;: <span class="keyword">b </span>     <span class="number">0x10019d87c</span>               <span class="comment">; &lt;+172&gt; at main.m</span></span><br><span class="line">    <span class="number">0x10019d838</span> &lt;+<span class="number">104</span>&gt;: <span class="keyword">sub </span>   x0, x29, <span class="number">#0x20</span>            <span class="comment">; =0x20 </span></span><br><span class="line">    <span class="number">0x10019d83c</span> &lt;+<span class="number">108</span>&gt;: <span class="keyword">ldr </span>   x8, [<span class="built_in">sp</span>, <span class="number">#0x20</span>]</span><br><span class="line">    <span class="number">0x10019d840</span> &lt;+<span class="number">112</span>&gt;: <span class="keyword">ldr </span>   x9, [x8]</span><br><span class="line">    <span class="number">0x10019d844</span> &lt;+<span class="number">116</span>&gt;: <span class="keyword">ldr </span>   x10, [<span class="built_in">sp</span>, <span class="number">#0x30</span>]</span><br><span class="line">    <span class="number">0x10019d848</span> &lt;+<span class="number">120</span>&gt;: <span class="keyword">ldr </span>   x1, [x10]</span><br><span class="line">    <span class="number">0x10019d84c</span> &lt;+<span class="number">124</span>&gt;: <span class="keyword">str </span>   x0, [<span class="built_in">sp</span>, <span class="number">#0x10</span>]</span><br><span class="line">    <span class="number">0x10019d850</span> &lt;+<span class="number">128</span>&gt;: <span class="keyword">mov </span>   x0, x9</span><br><span class="line">    <span class="number">0x10019d854</span> &lt;+<span class="number">132</span>&gt;: <span class="keyword">ldr </span>   x9, [<span class="built_in">sp</span>, <span class="number">#0x28</span>]</span><br><span class="line">    <span class="number">0x10019d858</span> &lt;+<span class="number">136</span>&gt;: <span class="keyword">blr </span>   x9</span><br><span class="line">    <span class="number">0x10019d85c</span> &lt;+<span class="number">140</span>&gt;: stur   x0, [x29, #-<span class="number">0x20</span>]</span><br><span class="line">    <span class="number">0x10019d860</span> &lt;+<span class="number">144</span>&gt;: <span class="keyword">ldr </span>   x0, [<span class="built_in">sp</span>, <span class="number">#0x10</span>]</span><br><span class="line">    <span class="number">0x10019d864</span> &lt;+<span class="number">148</span>&gt;: ldur   x1, [x29, #-<span class="number">0x28</span>]</span><br><span class="line">    <span class="number">0x10019d868</span> &lt;+<span class="number">152</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x1001a0f04</span>               <span class="comment">; symbol stub for: objc_storeStrong</span></span><br><span class="line">    <span class="number">0x10019d86c</span> &lt;+<span class="number">156</span>&gt;: ldur   x8, [x29, #-<span class="number">0x18</span>]</span><br><span class="line">    <span class="number">0x10019d870</span> &lt;+<span class="number">160</span>&gt;: <span class="keyword">add </span>   x8, x8, <span class="number">#0x1</span>              <span class="comment">; =0x1 </span></span><br><span class="line">    <span class="number">0x10019d874</span> &lt;+<span class="number">164</span>&gt;: stur   x8, [x29, #-<span class="number">0x18</span>]</span><br><span class="line">    <span class="number">0x10019d878</span> &lt;+<span class="number">168</span>&gt;: <span class="keyword">b </span>     <span class="number">0x10019d820</span>               <span class="comment">; &lt;+80&gt; at main.m</span></span><br><span class="line">    <span class="number">0x10019d87c</span> &lt;+<span class="number">172</span>&gt;: <span class="keyword">mov </span>   w0, <span class="number">#0x0</span></span><br><span class="line">    <span class="number">0x10019d880</span> &lt;+<span class="number">176</span>&gt;: <span class="keyword">ldr </span>   x1, [<span class="built_in">sp</span>, <span class="number">#0x18</span>]</span><br><span class="line">    <span class="number">0x10019d884</span> &lt;+<span class="number">180</span>&gt;: <span class="keyword">str </span>   w0, [<span class="built_in">sp</span>, <span class="number">#0xc</span>]</span><br><span class="line">    <span class="number">0x10019d888</span> &lt;+<span class="number">184</span>&gt;: <span class="keyword">mov </span>   x0, x1</span><br><span class="line">    <span class="number">0x10019d88c</span> &lt;+<span class="number">188</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x1001a0e08</span>               <span class="comment">; symbol stub for: objc_autoreleasePoolPop</span></span><br><span class="line">    <span class="number">0x10019d890</span> &lt;+<span class="number">192</span>&gt;: <span class="keyword">ldr </span>   w0, [<span class="built_in">sp</span>, <span class="number">#0xc</span>]</span><br><span class="line">    <span class="number">0x10019d894</span> &lt;+<span class="number">196</span>&gt;: ldp    x29, x30, [<span class="built_in">sp</span>, <span class="number">#0x60</span>]</span><br><span class="line">    <span class="number">0x10019d898</span> &lt;+<span class="number">200</span>&gt;: <span class="keyword">add </span>   <span class="built_in">sp</span>, <span class="built_in">sp</span>, <span class="number">#0x70</span>             <span class="comment">; =0x70 </span></span><br><span class="line">    <span class="number">0x10019d89c</span> &lt;+<span class="number">204</span>&gt;: ret</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;而这两个函数的实现如下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">objc_autoreleasePoolPush</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> AutoreleasePoolPage::push();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">objc_autoreleasePoolPop</span><span class="params">(<span class="keyword">void</span> *ctxt)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    AutoreleasePoolPage::pop(ctxt);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;继续往下前，需要了解<code>AutoreleasePoolPage</code>的结构，定义如下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AutoreleasePoolPage</span> </span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    ... ...</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">size_t</span> <span class="keyword">const</span> SIZE = PAGE_MAX_SIZE;</span><br><span class="line">    <span class="keyword">magic_t</span> <span class="keyword">const</span> magic;</span><br><span class="line">    id *next; <span class="comment">// 指向能存放“autorelease对象的地址”的地址</span></span><br><span class="line">    <span class="keyword">pthread_t</span> <span class="keyword">const</span> thread;</span><br><span class="line">    AutoreleasePoolPage * <span class="keyword">const</span> parent;</span><br><span class="line">    AutoreleasePoolPage *child;</span><br><span class="line">    <span class="keyword">uint32_t</span> <span class="keyword">const</span> depth;</span><br><span class="line">    <span class="keyword">uint32_t</span> hiwat;</span><br><span class="line">    </span><br><span class="line">    ... ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;首先，看到这个结构中有<code>parent</code>和<code>child</code>成员，第一反应这个结构是双向链表。这个结构的大小为<code>PAGE_MAX_SIZE</code>，这是一个宏，其定义如下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PAGE_MAX_SIZE           PAGE_SIZE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	PAGE_SIZE				I386_PGBYTES</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> I386_PGBYTES			4096</span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;一个<code>AutoreleasePoolPage</code>的大小为4096字节，除了用来存放其成员变量所占用的空间外，剩余的空间都是用来存放autorelease对象的地址。</p>
+<p>&emsp;&emsp;继续之前的源码分析，首先看下<code>push</code>方法的实现</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> *<span class="title">push</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    id *dest;</span><br><span class="line">    <span class="keyword">if</span> (DebugPoolAllocation) &#123;</span><br><span class="line">        dest = autoreleaseNewPage(POOL_BOUNDARY);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        dest = autoreleaseFast(POOL_BOUNDARY);</span><br><span class="line">    &#125;</span><br><span class="line">    assert(dest == EMPTY_POOL_PLACEHOLDER || *dest == POOL_BOUNDARY);</span><br><span class="line">    <span class="keyword">return</span> dest;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;<code>push</code>方法里面接着调用了<code>autoreleaseFast</code>，并且传入了一个<code>POOL_BOUNDARY</code>对象，从字面意思理解这个对象是自动释放池的边界，那么它具体指的是什么？我们看到它的宏定义如下，其实就是个<code>nil</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#   <span class="meta-keyword">define</span> POOL_BOUNDARY nil</span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;再继续往下看下源代码，首先看看有没有已经创建了的自动释放池，并且如果没满的话调用<code>AutoreleasePoolPage</code>的<code>add</code>方法，如果满了的话就调用<code>autoreleaseFullPage</code>，最后如果没有创建过自动释放池就新建一个，则调用<code>autoreleaseNoPage</code>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> id *<span class="title">autoreleaseFast</span><span class="params">(id obj)</span> </span>&#123;</span><br><span class="line">    AutoreleasePoolPage *page = hotPage();</span><br><span class="line">    <span class="keyword">if</span> (page &amp;&amp; !page-&gt;full()) &#123;</span><br><span class="line">        <span class="keyword">return</span> page-&gt;add(obj);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (page) &#123;</span><br><span class="line">        <span class="keyword">return</span> autoreleaseFullPage(obj, page);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> autoreleaseNoPage(obj);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;首先看下<code>add</code>方法，直接将<code>POOL_BOUNDARY</code>加入进自动释放池中，并返回<code>POOL_BOUNDARY</code>的地址。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">id *<span class="title">add</span><span class="params">(id obj)</span> </span>&#123;</span><br><span class="line">    assert(!full());</span><br><span class="line">    unprotect();</span><br><span class="line">    id *ret = next;  </span><br><span class="line">    *next++ = obj;</span><br><span class="line">    protect();</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;接着看<code>autoreleaseFullPage</code>，前面说过自动释放池是双链表形式存在的，所以先遍历表，找到空的链表，然后把对象加入这个池子中；但是如果没子链表，那么就新建一个。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">id *<span class="title">autoreleaseFullPage</span><span class="params">(id obj, AutoreleasePoolPage *page)</span> </span>&#123;</span><br><span class="line">    assert(page == hotPage());</span><br><span class="line">    assert(page-&gt;full()  ||  DebugPoolAllocation);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (page-&gt;child) page = page-&gt;child;</span><br><span class="line">        <span class="keyword">else</span> page = <span class="keyword">new</span> AutoreleasePoolPage(page);</span><br><span class="line">    &#125; <span class="keyword">while</span> (page-&gt;full());</span><br><span class="line"></span><br><span class="line">    setHotPage(page);</span><br><span class="line">    <span class="keyword">return</span> page-&gt;add(obj);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;最后，看下<code>autoreleaseNoPage</code>，也是简单明了的代码，直接新建一个自动释放池，并将其设置为hot，因为自动释放池肯定有很多个，当前活跃的可添加自动释放对象的自动释放池为hot，否则为cold。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">id *<span class="title">autoreleaseNoPage</span><span class="params">(id obj)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        ... ...</span><br><span class="line">        AutoreleasePoolPage *page = <span class="keyword">new</span> AutoreleasePoolPage(nil);</span><br><span class="line">        setHotPage(page);</span><br><span class="line">        </span><br><span class="line">		... ...</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> page-&gt;add(obj);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;看完<code>push</code>方法源码，我们可以总结，当首次调用<code>AutoreleasePoolPage</code>的<code>push</code>方法时候，会将一个<code>POOL_BOUNDARY</code>入栈，并且会返回其存放的内存地址，这个地址也就是能存放自动释放对象的空间的首地址。所以，后面的autorelease对象的地址存放在这个<code>POOL_BOUNDARY</code>所在地址的后面。</p>
+<p><img src="autoreleasepool_format.png" alt="AutoreleasePoolPage内存示意图"> </p>
+<p>&emsp;&emsp;如果4096的空间都被用完了，就会新创建一个<code>AutoreleasePoolPage</code>对象。</p>
+<p>&emsp;&emsp;看完<code>push</code>方法，接着看下<code>pop</code>方法，核心方法就是<code>releaseUntil</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">pop</span><span class="params">(<span class="keyword">void</span> *token)</span> </span>&#123;</span><br><span class="line">    AutoreleasePoolPage *page;</span><br><span class="line">    id *stop;</span><br><span class="line"></span><br><span class="line">    ... ...</span><br><span class="line"></span><br><span class="line">    page = pageForPointer(token);</span><br><span class="line">    stop = (id *)token;</span><br><span class="line"></span><br><span class="line">    ... ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 对自动释放池内的对象调用release方法，直到遇到POOL_BOUNDARY</span></span><br><span class="line">    page-&gt;releaseUntil(stop);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 释放自动释放池</span></span><br><span class="line">    page-&gt;kill();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;接着看<code>releaseUntil</code>方法，遍历池子，在找到<code>POOL_BOUNDARY</code>之前的对象，都调用<code>release</code>方法进行释放。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">releaseUntil</span><span class="params">(id *stop)</span> </span>&#123;</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">this</span>-&gt;next != stop) &#123;</span><br><span class="line">            ... ...</span><br><span class="line">                </span><br><span class="line">            page-&gt;unprotect();</span><br><span class="line">        	<span class="comment">// 之前说过，next指向下一个可存放自动释放对象的地址，所以往前就是已经存放过的那些自动释放对象了</span></span><br><span class="line">            id obj = *--page-&gt;next;</span><br><span class="line">            </span><br><span class="line">        	··· ···</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (obj != POOL_BOUNDARY) &#123;</span><br><span class="line">                objc_release(obj);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        setHotPage(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;总结，最后调用<code>pop</code>方法的时候，会把这个<code>POOL_BOUNDARY</code>所在地址作为参数传进去。然后从整个链表中所存放的最后一个autorelease对象的地址开始，依次往前调用对象的<code>release</code>方法，直到遇到前面传进来的<code>POOL_BOUNDARY</code>所在地址。</p>
+<p>&emsp;&emsp;如果是嵌套<code>autorelease</code>，因为没遇到一次<code>@autorelease{}</code>都会加入一个<code>POOL_BOUNDARY</code>，所以pop的时候，遇到<code>POOL_BOUNDARY</code>就停止了。所以对于对象来说，在最里面嵌套里的对象最先被释放掉。</p>
+<p>&emsp;&emsp;我们举个例子，会调用到私有函数<code>_objc_autoreleasePoolPrint</code>来帮助我们完成这个例子，然后我们需要将工程配置成MRC。</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="keyword">void</span> _objc_autoreleasePoolPrint();</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        Animal *a1 = [[Animal new] autorelease];</span><br><span class="line">        Animal *a2 = [[Animal new] autorelease];</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">            Animal *a3 = [[Animal new] autorelease];</span><br><span class="line">            _objc_autoreleasePoolPrint(); <span class="comment">// 打印自动释放池</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"第二个释放池结束"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"第一个释放池结束"</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 运行结果</span></span><br><span class="line">objc[<span class="number">53031</span>]: <span class="meta">##############</span></span><br><span class="line">objc[<span class="number">53031</span>]: AUTORELEASE POOLS <span class="keyword">for</span> thread <span class="number">0x112b03380</span></span><br><span class="line">objc[<span class="number">53031</span>]: <span class="number">5</span> releases pending.</span><br><span class="line">objc[<span class="number">53031</span>]: [<span class="number">0x7fdff9002000</span>]  ................  PAGE  (hot) (cold)</span><br><span class="line">objc[<span class="number">53031</span>]: [<span class="number">0x7fdff9002038</span>]  <span class="meta">################  POOL 0x7fdff9002038 // 第一个AutoReleasePool的POOL_BOUNDARY</span></span><br><span class="line">objc[<span class="number">53031</span>]: [<span class="number">0x7fdff9002040</span>]    <span class="number">0x60c00001dca0</span>  Animal</span><br><span class="line">objc[<span class="number">53031</span>]: [<span class="number">0x7fdff9002048</span>]    <span class="number">0x60c00001dc90</span>  Animal</span><br><span class="line">objc[<span class="number">53031</span>]: [<span class="number">0x7fdff9002050</span>]  <span class="meta">################  POOL 0x7fdff9002050 // 第二个AutoReleasePool的POOL_BOUNDARY</span></span><br><span class="line">objc[<span class="number">53031</span>]: [<span class="number">0x7fdff9002058</span>]    <span class="number">0x60c00001dc80</span>  Animal</span><br><span class="line">objc[<span class="number">53031</span>]: <span class="meta">##############</span></span><br><span class="line"><span class="number">2018</span><span class="number">-07</span><span class="number">-20</span> <span class="number">19</span>:<span class="number">49</span>:<span class="number">15.576802</span>+<span class="number">0800</span> testData[<span class="number">53031</span>:<span class="number">3013783</span>] -[Animal dealloc] <span class="comment">// 第二个AutoReleasePool内的对象被释放</span></span><br><span class="line"><span class="number">2018</span><span class="number">-07</span><span class="number">-20</span> <span class="number">19</span>:<span class="number">49</span>:<span class="number">15.577441</span>+<span class="number">0800</span> testData[<span class="number">53031</span>:<span class="number">3013783</span>] 第二个释放池结束</span><br><span class="line"><span class="number">2018</span><span class="number">-07</span><span class="number">-20</span> <span class="number">19</span>:<span class="number">49</span>:<span class="number">15.577533</span>+<span class="number">0800</span> testData[<span class="number">53031</span>:<span class="number">3013783</span>] -[Animal dealloc] <span class="comment">// 第一个AutoReleasePool内的对象被释放</span></span><br><span class="line"><span class="number">2018</span><span class="number">-07</span><span class="number">-20</span> <span class="number">19</span>:<span class="number">49</span>:<span class="number">15.577645</span>+<span class="number">0800</span> testData[<span class="number">53031</span>:<span class="number">3013783</span>] -[Animal dealloc]</span><br><span class="line"><span class="number">2018</span><span class="number">-07</span><span class="number">-20</span> <span class="number">19</span>:<span class="number">49</span>:<span class="number">15.577768</span>+<span class="number">0800</span> testData[<span class="number">53031</span>:<span class="number">3013783</span>] 第一个释放池结束</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;对于释放时机，在<code>@autorelease{}</code>是出了大括号就会进行释放。</p>
+<p>&emsp;&emsp;那么，我们知道主线程中默认会自动开启一个RunLoop，所以在这种情况下，如果只是调用<code>autorelease</code>方法，释放时机是根据RunLoop的，比如像这样的情况。</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)viewDidLoad &#123;</span><br><span class="line">    [<span class="keyword">super</span> viewDidLoad];</span><br><span class="line">    </span><br><span class="line">    Animal *a1 = [[Animal new] autorelease];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;在主线程中，RunLoop注册了2个Observer，第一个，监听kCFRunLoopEntry，调用objc_autoreleasePoolPush()；第二个，监听了kCFRunLoopBeforeWaiting和kCFRunLoopBeforeExit，前者会调用objc_autoreleasePoolPop()和objc_autoreleasePoolPush()，后者会调用objc_autoreleasePoolPop()。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/24/深入分析Runloop/" rel="next" title="深入分析Runloop">
+                <i class="fa fa-chevron-left"></i> 深入分析Runloop
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/05/28/dyld启动流程/" rel="prev" title="dyld启动流程">
+                dyld启动流程 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">朝暮</p>
+              <p class="site-description motion-element" itemprop="description">联系方式：leylfl@foxmail.com</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-Tagged-Pointer"><span class="nav-number">1.</span> <span class="nav-text">0x01 Tagged Pointer</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-weak"><span class="nav-number">2.</span> <span class="nav-text">0x02 weak</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#storeWeak"><span class="nav-number">2.0.1.</span> <span class="nav-text">storeWeak</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SlideTable"><span class="nav-number">2.0.2.</span> <span class="nav-text">SlideTable</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#weak-unregister-no-lock"><span class="nav-number">2.0.3.</span> <span class="nav-text">weak_unregister_no_lock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#weak-register-no-lock"><span class="nav-number">2.0.4.</span> <span class="nav-text">weak_register_no_lock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#object-dispose"><span class="nav-number">2.0.5.</span> <span class="nav-text">object_dispose</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-Copy"><span class="nav-number">3.</span> <span class="nav-text">0x03 Copy</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#NSString"><span class="nav-number">3.0.1.</span> <span class="nav-text">NSString</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NSMutableString"><span class="nav-number">3.0.2.</span> <span class="nav-text">NSMutableString</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x04-NSProxy"><span class="nav-number">4.</span> <span class="nav-text">0x04 NSProxy</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-autoreleasepool"><span class="nav-number">5.</span> <span class="nav-text">0x05 autoreleasepool</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">朝暮</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

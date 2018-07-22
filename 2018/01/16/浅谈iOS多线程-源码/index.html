@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="0x01 开篇&amp;emsp;&amp;emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码都不是最新的，这篇文章是根据最新源码来进行阅读的。&amp;emsp;&amp;emsp;进入正题之前，我">
+<meta name="description" content="0x00 开篇&amp;emsp;&amp;emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码都不是最新的，这篇文章是根据最新源码来进行阅读的。&amp;emsp;&amp;emsp;进入正题之前，我">
 <meta property="og:type" content="article">
 <meta property="og:title" content="浅谈iOS多线程(源码)">
 <meta property="og:url" content="https://leylfl.github.io/2018/01/16/浅谈iOS多线程-源码/index.html">
 <meta property="og:site_name" content="朝暮的闲暇时刻">
-<meta property="og:description" content="0x01 开篇&amp;emsp;&amp;emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码都不是最新的，这篇文章是根据最新源码来进行阅读的。&amp;emsp;&amp;emsp;进入正题之前，我">
+<meta property="og:description" content="0x00 开篇&amp;emsp;&amp;emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码都不是最新的，这篇文章是根据最新源码来进行阅读的。&amp;emsp;&amp;emsp;进入正题之前，我">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://leylfl.github.io/2018/01/16/浅谈iOS多线程-源码/gcd_opensource.png">
-<meta property="og:updated_time" content="2018-02-09T09:17:36.000Z">
+<meta property="og:updated_time" content="2018-06-05T07:54:07.142Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="浅谈iOS多线程(源码)">
-<meta name="twitter:description" content="0x01 开篇&amp;emsp;&amp;emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码都不是最新的，这篇文章是根据最新源码来进行阅读的。&amp;emsp;&amp;emsp;进入正题之前，我">
+<meta name="twitter:description" content="0x00 开篇&amp;emsp;&amp;emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码都不是最新的，这篇文章是根据最新源码来进行阅读的。&amp;emsp;&amp;emsp;进入正题之前，我">
 <meta name="twitter:image" content="https://leylfl.github.io/2018/01/16/浅谈iOS多线程-源码/gcd_opensource.png">
 
 
@@ -323,7 +323,36 @@
       
 
       
-        <h1 id="0x01-开篇"><a href="#0x01-开篇" class="headerlink" title="0x01 开篇"></a>0x01 开篇</h1><p>&emsp;&emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码都不是最新的，这篇文章是根据最新源码来进行阅读的。<br>&emsp;&emsp;进入正题之前，我们需要做些准备工作。了解下常用的宏和常用的数据结构体。</p>
+        <h1 id="0x00-开篇"><a href="#0x00-开篇" class="headerlink" title="0x00 开篇"></a>0x00 开篇</h1><p>&emsp;&emsp;上一篇文章，我们对于常用的GCD使用方法大致理了一遍，那么在使用过程中，我们肯定有这样的疑问？队列是怎么被创建的？任务是怎么放进队列的？为什么会造成死锁？等等等问题，所以在这一篇文章里，我们会从源码的阅读过程中解答这些疑问。虽然网上也有很多讲解源码的文章，但文章对应的源码都不是最新的，这篇文章是根据最新源码来进行阅读的。<br>&emsp;&emsp;进入正题之前，我们需要做些准备工作。了解消息的本质</p>
+<h1 id="0x01-Mach"><a href="#0x01-Mach" class="headerlink" title="0x01 Mach"></a>0x01 Mach</h1><p>&emsp;&emsp;Mach是XNU的核心，被BSD层包装。XNU由以下几个组件组成：</p>
+<ul>
+<li>MACH内核<ul>
+<li>进程和线程抽象</li>
+<li>虚拟内存管理</li>
+<li>任务调度</li>
+<li>进程间通信和消息传递机制</li>
+</ul>
+</li>
+<li>BSD<ul>
+<li>UNIX进程模型</li>
+<li>POSIX线程模型</li>
+<li>UNIX用户与组</li>
+<li>网络协议栈</li>
+<li>文件系统访问</li>
+<li>设备访问</li>
+</ul>
+</li>
+<li>libKern</li>
+<li>I/O Kit</li>
+</ul>
+<p>&emsp;&emsp;Mach的独特之处在于选择了通过消息传递的方式实现对象与对象之间的通信。而其他架构一个对象要访问另一个对象需要通过一个大家都知道的接口，而Mach对象不能直接调用另一个对象，而是必须传递消息。</p>
+<p>&emsp;&emsp;一条消息就像网络包一样，定义为透明的blob(binary larger object，二进制大对象)，通过固定的包头进行分装。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">        <span class="keyword">mach_msg_header_t</span>       header;</span><br><span class="line">        <span class="keyword">mach_msg_body_t</span>         body;</span><br><span class="line">&#125; <span class="keyword">mach_msg_base_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span>	<span class="class"><span class="keyword">struct</span> </span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="keyword">mach_msg_bits_t</span>	msgh_bits; <span class="comment">// 消息头标志位</span></span><br><span class="line">  <span class="keyword">mach_msg_size_t</span>	msgh_size; <span class="comment">// 大小</span></span><br><span class="line">  <span class="keyword">mach_port_t</span>		msgh_remote_port; <span class="comment">// 目标(发消息)或源(接消息)</span></span><br><span class="line">  <span class="keyword">mach_port_t</span>		msgh_local_port; <span class="comment">// 源(发消息)或目标(接消息)</span></span><br><span class="line">  <span class="keyword">mach_port_name_t</span>	msgh_voucher_port;</span><br><span class="line">  <span class="keyword">mach_msg_id_t</span>		msgh_id; <span class="comment">// 唯一id</span></span><br><span class="line">&#125; <span class="keyword">mach_msg_header_t</span>;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;Mach消息的发送和接收都是通过同一个API函数<code>mach_msg()</code>进行的。这个函数在用户态和内核态都有实现。为了实现消息的发送和接收，<code>mach_msg()</code>函数调用了一个Mach陷阱(trap)。Mach陷阱就是Mach中和系统调用等同的概念。在用户态调用<code>mach_msg_trap()</code>会引发陷阱机制，切换到内核态，在内核态中，内核实现的<code>mach_msg()</code>会完成实际的工作。这个函数也将会在下面的源码分析中遇到。</p>
+<p>&emsp;&emsp;每一个BSD进程都在底层关联一个Mach任务对象，因为Mach提供的都是非常底层的抽象，提供的API从设计上讲很基础且不完整，所以需要在这之上提供一个更高的层次以实现完整的功能。我们开发层遇到的进程和线程就是BSD层对Mach的任务和线程的复杂包装。</p>
+<p>&emsp;&emsp;进程填充的是线程，而线程是二进制代码的实际执行单元。用户态的线程始于对pthread_create的调用。这个函数的又由bsdthread_create系统调用完成，而bsdthread_create又其实是Mach中的thread_create的复杂包装，说到底真正的线程创建还是有Mach层完成。</p>
+<p>&emsp;&emsp;在UNIX中，进程不能被创建出来，都是通过fork()系统调用复制出来的。复制出来的进程都会被要加载的执行程序覆盖整个内存空间。</p>
+<p>&emsp;&emsp;接着，了解下常用的宏和常用的数据结构体。</p>
 <h1 id="0x02-源码中常见的宏"><a href="#0x02-源码中常见的宏" class="headerlink" title="0x02 源码中常见的宏"></a>0x02 源码中常见的宏</h1><h3 id="1-builtin-expect"><a href="#1-builtin-expect" class="headerlink" title="1. __builtin_expect"></a>1. __builtin_expect</h3><p>&emsp;&emsp;这个其实是个函数，针对编译器优化的一个函数，后面几个宏是对这个函数的封装，所以提前拎出来说一下。写代码中我们经常会遇到条件判断语句<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(今天是工作日) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"好好上班"</span>);</span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"好好睡觉"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>&emsp;&emsp;CPU读取指令的时候并非一条一条的来读，而是多条一起加载进来，比如已经加载了if(今天是工作日) printf(“好好上班”);的指令，这时候条件式如果为非，也就是非工作日，那么CPU继续把printf(“好好睡觉”);这条指令加载进来，这样就造成了性能浪费的现象。<br>&emsp;&emsp;__builtin_expect的第一个参数是实际值，第二个参数是预测值。使用这个目的是告诉编译器if条件式是不是有更大的可能被满足。</p>
 <h3 id="2-likely和unlikely"><a href="#2-likely和unlikely" class="headerlink" title="2. likely和unlikely"></a>2. likely和unlikely</h3><p>&emsp;&emsp;解开这个宏后其实是对__builtin_expect封装，likely表示更大可能成立，unlikely表示更大可能不成立。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> likely(x) __builtin_expect(!!(x), 1)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> unlikely(x) __builtin_expect(!!(x), 0)</span></span><br></pre></td></tr></table></figure></p>
@@ -506,6 +535,10 @@
 
           <div class="post-nav-prev post-nav-item">
             
+              <a href="/2018/04/06/多线程中锁的应用/" rel="prev" title="多线程中锁的应用">
+                多线程中锁的应用 <i class="fa fa-chevron-right"></i>
+              </a>
+            
           </div>
         </div>
       
@@ -581,7 +614,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-count">17</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -592,7 +625,7 @@
               
               <div class="site-state-item site-state-categories">
                 
-                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-count">3</span>
                   <span class="site-state-item-name">分类</span>
                 
               </div>
@@ -627,7 +660,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-开篇"><span class="nav-number">1.</span> <span class="nav-text">0x01 开篇</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-源码中常见的宏"><span class="nav-number">2.</span> <span class="nav-text">0x02 源码中常见的宏</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-builtin-expect"><span class="nav-number">2.0.1.</span> <span class="nav-text">1. __builtin_expect</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-likely和unlikely"><span class="nav-number">2.0.2.</span> <span class="nav-text">2. likely和unlikely</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-fastpath和slowpath"><span class="nav-number">2.0.3.</span> <span class="nav-text">3. fastpath和slowpath</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-os-atomic-cmpxchg"><span class="nav-number">2.0.4.</span> <span class="nav-text">4. os_atomic_cmpxchg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-os-atomic-store2o"><span class="nav-number">2.0.5.</span> <span class="nav-text">5. os_atomic_store2o</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-os-atomic-inc-orig"><span class="nav-number">2.0.6.</span> <span class="nav-text">6. os_atomic_inc_orig</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-数据结构体"><span class="nav-number">3.</span> <span class="nav-text">0x03 数据结构体</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-dispatch-queue-t"><span class="nav-number">3.0.1.</span> <span class="nav-text">1. dispatch_queue_t</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-dispatch-continuation-t"><span class="nav-number">3.0.2.</span> <span class="nav-text">2. dispatch_continuation_t</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-dispatch-object-t"><span class="nav-number">3.0.3.</span> <span class="nav-text">3. dispatch_object_t</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-dispatch-function-t"><span class="nav-number">3.0.4.</span> <span class="nav-text">4. dispatch_function_t</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-创建队列"><span class="nav-number">4.</span> <span class="nav-text">0x03 创建队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x04-dispatch-sync"><span class="nav-number">5.</span> <span class="nav-text">0x04 dispatch_sync</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-dispatch-async"><span class="nav-number">6.</span> <span class="nav-text">0x05 dispatch_async</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-dispatch-group-async"><span class="nav-number">7.</span> <span class="nav-text">0x05 dispatch_group_async</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x06-dispatch-once"><span class="nav-number">8.</span> <span class="nav-text">0x06 dispatch_once</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x06-dispatch-group-create-amp-dispatch-semaphore-create"><span class="nav-number">9.</span> <span class="nav-text">0x06 dispatch_group_create &amp; dispatch_semaphore_create</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x07-dispatch-group-wait-amp-dispatch-semaphore-wait"><span class="nav-number">10.</span> <span class="nav-text">0x07 dispatch_group_wait &amp; dispatch_semaphore_wait</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x08-dispatch-group-notify"><span class="nav-number">11.</span> <span class="nav-text">0x08 dispatch_group_notify</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x09-dispatch-barrier-async"><span class="nav-number">12.</span> <span class="nav-text">0x09 dispatch_barrier_async</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x10-dispatch-get-global-queue"><span class="nav-number">13.</span> <span class="nav-text">0x10 dispatch_get_global_queue</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x11-结束语"><span class="nav-number">14.</span> <span class="nav-text">0x11 结束语</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#扩展阅读"><span class="nav-number">14.0.1.</span> <span class="nav-text">扩展阅读</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x00-开篇"><span class="nav-number">1.</span> <span class="nav-text">0x00 开篇</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-Mach"><span class="nav-number">2.</span> <span class="nav-text">0x01 Mach</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-源码中常见的宏"><span class="nav-number">3.</span> <span class="nav-text">0x02 源码中常见的宏</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-builtin-expect"><span class="nav-number">3.0.1.</span> <span class="nav-text">1. __builtin_expect</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-likely和unlikely"><span class="nav-number">3.0.2.</span> <span class="nav-text">2. likely和unlikely</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-fastpath和slowpath"><span class="nav-number">3.0.3.</span> <span class="nav-text">3. fastpath和slowpath</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-os-atomic-cmpxchg"><span class="nav-number">3.0.4.</span> <span class="nav-text">4. os_atomic_cmpxchg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-os-atomic-store2o"><span class="nav-number">3.0.5.</span> <span class="nav-text">5. os_atomic_store2o</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-os-atomic-inc-orig"><span class="nav-number">3.0.6.</span> <span class="nav-text">6. os_atomic_inc_orig</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-数据结构体"><span class="nav-number">4.</span> <span class="nav-text">0x03 数据结构体</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-dispatch-queue-t"><span class="nav-number">4.0.1.</span> <span class="nav-text">1. dispatch_queue_t</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-dispatch-continuation-t"><span class="nav-number">4.0.2.</span> <span class="nav-text">2. dispatch_continuation_t</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-dispatch-object-t"><span class="nav-number">4.0.3.</span> <span class="nav-text">3. dispatch_object_t</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-dispatch-function-t"><span class="nav-number">4.0.4.</span> <span class="nav-text">4. dispatch_function_t</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-创建队列"><span class="nav-number">5.</span> <span class="nav-text">0x03 创建队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x04-dispatch-sync"><span class="nav-number">6.</span> <span class="nav-text">0x04 dispatch_sync</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-dispatch-async"><span class="nav-number">7.</span> <span class="nav-text">0x05 dispatch_async</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-dispatch-group-async"><span class="nav-number">8.</span> <span class="nav-text">0x05 dispatch_group_async</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x06-dispatch-once"><span class="nav-number">9.</span> <span class="nav-text">0x06 dispatch_once</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x06-dispatch-group-create-amp-dispatch-semaphore-create"><span class="nav-number">10.</span> <span class="nav-text">0x06 dispatch_group_create &amp; dispatch_semaphore_create</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x07-dispatch-group-wait-amp-dispatch-semaphore-wait"><span class="nav-number">11.</span> <span class="nav-text">0x07 dispatch_group_wait &amp; dispatch_semaphore_wait</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x08-dispatch-group-notify"><span class="nav-number">12.</span> <span class="nav-text">0x08 dispatch_group_notify</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x09-dispatch-barrier-async"><span class="nav-number">13.</span> <span class="nav-text">0x09 dispatch_barrier_async</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x10-dispatch-get-global-queue"><span class="nav-number">14.</span> <span class="nav-text">0x10 dispatch_get_global_queue</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x11-结束语"><span class="nav-number">15.</span> <span class="nav-text">0x11 结束语</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#扩展阅读"><span class="nav-number">15.0.1.</span> <span class="nav-text">扩展阅读</span></a></li></ol></li></ol></li></ol></div>
             
 
           </div>

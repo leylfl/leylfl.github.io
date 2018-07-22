@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="0x01 配置&amp;emsp;&amp;emsp;Clang是LLVM的编译前端，我们的OC、Swift通过Clang经过预处理、词语分析、语法分析，最后生成IR中间码后，交由LLVM进行优化，最后针对不同的平台将IR转换成对应平台的汇编代码。 &amp;emsp;&amp;emsp;本篇需要对Clang进行一些定制化，所以我们需要重新编译llvm，步骤如下：  下载源码   cd 需要下载源码的目录 git clone h">
+<meta property="og:type" content="article">
+<meta property="og:title" content="玩玩Clang">
+<meta property="og:url" content="https://leylfl.github.io/2018/06/07/玩玩Clang/index.html">
+<meta property="og:site_name" content="朝暮的闲暇时刻">
+<meta property="og:description" content="0x01 配置&amp;emsp;&amp;emsp;Clang是LLVM的编译前端，我们的OC、Swift通过Clang经过预处理、词语分析、语法分析，最后生成IR中间码后，交由LLVM进行优化，最后针对不同的平台将IR转换成对应平台的汇编代码。 &amp;emsp;&amp;emsp;本篇需要对Clang进行一些定制化，所以我们需要重新编译llvm，步骤如下：  下载源码   cd 需要下载源码的目录 git clone h">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://leylfl.github.io/2018/06/07/玩玩Clang/buid_setting.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/06/07/玩玩Clang/build_error.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/06/07/玩玩Clang/build_setting_2.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/06/07/玩玩Clang/build_error_2.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/06/07/玩玩Clang/build_error_3.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/06/07/玩玩Clang/build_success.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/06/07/玩玩Clang/build_error_4.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/06/07/玩玩Clang/build_demo_1.png">
+<meta property="og:updated_time" content="2018-06-14T05:50:34.635Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="玩玩Clang">
+<meta name="twitter:description" content="0x01 配置&amp;emsp;&amp;emsp;Clang是LLVM的编译前端，我们的OC、Swift通过Clang经过预处理、词语分析、语法分析，最后生成IR中间码后，交由LLVM进行优化，最后针对不同的平台将IR转换成对应平台的汇编代码。 &amp;emsp;&amp;emsp;本篇需要对Clang进行一些定制化，所以我们需要重新编译llvm，步骤如下：  下载源码   cd 需要下载源码的目录 git clone h">
+<meta name="twitter:image" content="https://leylfl.github.io/2018/06/07/玩玩Clang/buid_setting.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://leylfl.github.io/2018/06/07/玩玩Clang/"/>
+
+
+
+
+
+  <title>玩玩Clang | 朝暮的闲暇时刻</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">朝暮的闲暇时刻</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://leylfl.github.io/2018/06/07/玩玩Clang/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="朝暮">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="朝暮的闲暇时刻">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">玩玩Clang</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-07T14:23:12+08:00">
+                2018-06-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="0x01-配置"><a href="#0x01-配置" class="headerlink" title="0x01 配置"></a>0x01 配置</h1><p>&emsp;&emsp;Clang是LLVM的编译前端，我们的OC、Swift通过Clang经过预处理、词语分析、语法分析，最后生成IR中间码后，交由LLVM进行优化，最后针对不同的平台将IR转换成对应平台的汇编代码。</p>
+<p>&emsp;&emsp;本篇需要对Clang进行一些定制化，所以我们需要重新编译llvm，步骤如下：</p>
+<ul>
+<li><p>下载源码</p>
+<blockquote>
+<ul>
+<li><p>cd 需要下载源码的目录</p>
+<p>git clone <a href="http://llvm.org/git/llvm.git" target="_blank" rel="noopener">http://llvm.org/git/llvm.git</a> </p>
+</li>
+<li><p>cd llvm/tools </p>
+<p>git clone <a href="http://llvm.org/git/clang.git" target="_blank" rel="noopener">http://llvm.org/git/clang.git</a> </p>
+</li>
+<li><p>cd ../projects </p>
+<p>git clone <a href="http://llvm.org/git/compiler-rt.git" target="_blank" rel="noopener">http://llvm.org/git/compiler-rt.git</a> </p>
+</li>
+<li><p>cd ../tools/clang/tools </p>
+<p>git clone <a href="http://llvm.org/git/clang-tools-extra.git" target="_blank" rel="noopener">http://llvm.org/git/clang-tools-extra.git</a></p>
+</li>
+</ul>
+</blockquote>
+</li>
+<li><p>编译</p>
+<blockquote>
+<ul>
+<li><p>安装cmake</p>
+<p>brew install cmake</p>
+</li>
+<li><p>编译</p>
+<ul>
+<li>mkdir 新建的目录名      (因为不支持源代码目录内编译)</li>
+<li>cd 新建的目录名</li>
+<li>cmake  llvm源代码目录</li>
+<li>cmake –build .</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<p>&emsp;&emsp;参考链接：<a href="http://llvm.org/docs/CMake.html，编译完所有的工具都在编译目录下的bin目录下。" target="_blank" rel="noopener">http://llvm.org/docs/CMake.html，编译完所有的工具都在编译目录下的bin目录下。</a></p>
+<h1 id="0x02-试玩"><a href="#0x02-试玩" class="headerlink" title="0x02 试玩"></a>0x02 试玩</h1><p>&emsp;&emsp;我们有代码如下</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="meta-string">&lt;UIKit/UIKit.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="meta-string">"AppDelegate.h"</span></span></span><br><span class="line"><span class="meta">#import <span class="meta-string">"Animal.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#define NUM_1  100</span></span><br><span class="line"><span class="meta">#define NUM_2  200</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">int</span> a = NUM_1 + NUM_2;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h3><p>&emsp;&emsp;经过预处理后的代码会是什么样的？使用Clang命令如下</p>
+<blockquote>
+<p>clang -E main.m</p>
+</blockquote>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta"># 1 <span class="meta-string">"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/System/Library/Frameworks/Foundation.framework/Headers/FoundationLegacySwiftCompatibility.h"</span> 1 3</span></span><br><span class="line"><span class="meta"># 185 <span class="meta-string">"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/System/Library/Frameworks/Foundation.framework/Headers/Foundation.h"</span> 2 3</span></span><br><span class="line"><span class="meta"># 10 <span class="meta-string">"./Animal.h"</span> 2</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">100</span> + <span class="number">200</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;预处理的过程中，导入了头文件，并把宏替换了。</p>
+<h3 id="词法分析"><a href="#词法分析" class="headerlink" title="词法分析"></a>词法分析</h3><p>&emsp;&emsp;词法分析的命令</p>
+<blockquote>
+<p>clang -fsyntax-only -Xclang -dump-tokens main.m </p>
+</blockquote>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">int 'int'	 [StartOfLine]	Loc=&lt;main.m:17:1&gt;</span><br><span class="line">identifier 'main'	 [LeadingSpace]	Loc=&lt;main.m:17:5&gt;</span><br><span class="line">l_paren <span class="string">'('</span>		Loc=&lt;main.m:<span class="number">17</span>:<span class="number">9</span>&gt;</span><br><span class="line">int 'int'		Loc=&lt;main.m:17:10&gt;</span><br><span class="line">identifier 'argc'	 [LeadingSpace]	Loc=&lt;main.m:17:14&gt;</span><br><span class="line">comma <span class="string">','</span>		Loc=&lt;main.m:<span class="number">17</span>:<span class="number">18</span>&gt;</span><br><span class="line">char 'char'	 [LeadingSpace]	Loc=&lt;main.m:17:20&gt;</span><br><span class="line">star <span class="string">'*'</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">17</span>:<span class="number">25</span>&gt;</span><br><span class="line">identifier 'argv'	 [LeadingSpace]	Loc=&lt;main.m:17:27&gt;</span><br><span class="line">l_square <span class="string">'['</span>		Loc=&lt;main.m:<span class="number">17</span>:<span class="number">31</span>&gt;</span><br><span class="line">r_square <span class="string">']'</span>		Loc=&lt;main.m:<span class="number">17</span>:<span class="number">32</span>&gt;</span><br><span class="line">r_paren <span class="string">')'</span>		Loc=&lt;main.m:<span class="number">17</span>:<span class="number">33</span>&gt;</span><br><span class="line">l_brace <span class="string">'&#123;'</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">17</span>:<span class="number">35</span>&gt;</span><br><span class="line">int 'int'	 [StartOfLine] [LeadingSpace]	Loc=&lt;main.m:18:5&gt;</span><br><span class="line">identifier <span class="string">'a'</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">18</span>:<span class="number">9</span>&gt;</span><br><span class="line">equal <span class="string">'='</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">18</span>:<span class="number">11</span>&gt;</span><br><span class="line">numeric_constant '100'	 [LeadingSpace]	Loc=&lt;main.m:18:13 &lt;Spelling=main.m:13:16&gt;&gt;</span><br><span class="line">plus <span class="string">'+'</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">18</span>:<span class="number">19</span>&gt;</span><br><span class="line">numeric_constant '200'	 [LeadingSpace]	Loc=&lt;main.m:18:21 &lt;Spelling=main.m:14:16&gt;&gt;</span><br><span class="line">semi <span class="string">';'</span>		Loc=&lt;main.m:<span class="number">18</span>:<span class="number">26</span>&gt;</span><br><span class="line">int 'int'	 [StartOfLine] [LeadingSpace]	Loc=&lt;main.m:19:5&gt;</span><br><span class="line">identifier <span class="string">'b'</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">19</span>:<span class="number">9</span>&gt;</span><br><span class="line">equal <span class="string">'='</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">19</span>:<span class="number">11</span>&gt;</span><br><span class="line">numeric_constant <span class="string">'1'</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">19</span>:<span class="number">13</span>&gt;</span><br><span class="line">plus <span class="string">'+'</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">19</span>:<span class="number">15</span>&gt;</span><br><span class="line">numeric_constant <span class="string">'2'</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">19</span>:<span class="number">17</span>&gt;</span><br><span class="line">semi <span class="string">';'</span>		Loc=&lt;main.m:<span class="number">19</span>:<span class="number">18</span>&gt;</span><br><span class="line">return 'return'	 [StartOfLine] [LeadingSpace]	Loc=&lt;main.m:21:5&gt;</span><br><span class="line">numeric_constant <span class="string">'0'</span>	 [LeadingSpace]	Loc=&lt;main.m:<span class="number">21</span>:<span class="number">12</span>&gt;</span><br><span class="line">semi <span class="string">';'</span>		Loc=&lt;main.m:<span class="number">21</span>:<span class="number">13</span>&gt;</span><br><span class="line">r_brace <span class="string">'&#125;'</span>	 [StartOfLine]	Loc=&lt;main.m:<span class="number">25</span>:<span class="number">1</span>&gt;</span><br><span class="line">eof ''		Loc=&lt;main.m:25:2&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="语法分析"><a href="#语法分析" class="headerlink" title="语法分析"></a>语法分析</h3><p>&emsp;&emsp;语法分析命令如下</p>
+<blockquote>
+<p>clang  -fsyntax-only -Xclang -ast-dump main.m</p>
+</blockquote>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">-FunctionDecl 0x7ff34f2eeae8 &lt;main.m:17:1, line:25:1&gt; line:17:5 main 'int (int, char **)'</span><br><span class="line">  |-ParmVarDecl 0x7ff34f2ee918 &lt;col:10, col:14&gt; col:14 argc 'int'</span><br><span class="line">  |-ParmVarDecl 0x7ff34f2ee9d0 &lt;col:20, col:32&gt; col:27 argv 'char **':'char **'</span><br><span class="line">  `-CompoundStmt <span class="number">0x7ff34f2eedb8</span> &lt;col:<span class="number">35</span>, line:<span class="number">25</span>:<span class="number">1</span>&gt;</span><br><span class="line">    |-DeclStmt <span class="number">0x7ff34f2eec70</span> &lt;line:<span class="number">18</span>:<span class="number">5</span>, col:<span class="number">26</span>&gt;</span><br><span class="line">    | `-VarDecl 0x7ff34f2eeba8 &lt;col:5, line:14:16&gt; line:18:9 a 'int' cinit</span><br><span class="line">    |   `-BinaryOperator 0x7ff34f2eec48 &lt;line:13:16, line:14:16&gt; 'int' '+'</span><br><span class="line">    |     |-IntegerLiteral 0x7ff34f2eec08 &lt;line:13:16&gt; 'int' 100</span><br><span class="line">    |     `-IntegerLiteral 0x7ff34f2eec28 &lt;line:14:16&gt; 'int' 200</span><br><span class="line">    |-DeclStmt <span class="number">0x7ff34f2eed68</span> &lt;line:<span class="number">19</span>:<span class="number">5</span>, col:<span class="number">18</span>&gt;</span><br><span class="line">    | `-VarDecl 0x7ff34f2eeca0 &lt;col:5, col:17&gt; col:9 b 'int' cinit</span><br><span class="line">    |   `-BinaryOperator 0x7ff34f2eed40 &lt;col:13, col:17&gt; 'int' '+'</span><br><span class="line">    |     |-IntegerLiteral 0x7ff34f2eed00 &lt;col:13&gt; 'int' 1</span><br><span class="line">    |     `-IntegerLiteral 0x7ff34f2eed20 &lt;col:17&gt; 'int' 2</span><br><span class="line">    `-ReturnStmt <span class="number">0x7ff34f2eeda0</span> &lt;line:<span class="number">21</span>:<span class="number">5</span>, col:<span class="number">12</span>&gt;</span><br><span class="line">      `-IntegerLiteral 0x7ff34f2eed80 &lt;col:12&gt; 'int' 0</span><br></pre></td></tr></table></figure>
+<h3 id="生成IR"><a href="#生成IR" class="headerlink" title="生成IR"></a>生成IR</h3><p>&emsp;&emsp;IR是作为Clang的输出，llvm的输入，命令如下</p>
+<blockquote>
+<p>clang -S -fobjc-arc -emit-llvm main.m -o main.ll</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">; ModuleID = 'main.m'</span><br><span class="line">source_filename = <span class="string">"main.m"</span></span><br><span class="line">target datalayout = <span class="string">"e-m:o-i64:64-f80:128-n8:16:32:64-S128"</span></span><br><span class="line">target triple = <span class="string">"x86_64-apple-macosx10.13.0"</span></span><br><span class="line"></span><br><span class="line">; Function Attrs: noinline nounwind optnone ssp uwtable</span><br><span class="line">define i32 @main(i32, i8**) #<span class="number">0</span> &#123;</span><br><span class="line">  %<span class="number">3</span> = alloca i32, align <span class="number">4</span></span><br><span class="line">  %<span class="number">4</span> = alloca i32, align <span class="number">4</span></span><br><span class="line">  %<span class="number">5</span> = alloca i8**, align <span class="number">8</span></span><br><span class="line">  %<span class="number">6</span> = alloca i32, align <span class="number">4</span></span><br><span class="line">  %<span class="number">7</span> = alloca i32, align <span class="number">4</span></span><br><span class="line">  store i32 <span class="number">0</span>, i32* %<span class="number">3</span>, align <span class="number">4</span></span><br><span class="line">  store i32 %<span class="number">0</span>, i32* %<span class="number">4</span>, align <span class="number">4</span></span><br><span class="line">  store i8** %<span class="number">1</span>, i8*** %<span class="number">5</span>, align <span class="number">8</span></span><br><span class="line">  store i32 <span class="number">300</span>, i32* %<span class="number">6</span>, align <span class="number">4</span></span><br><span class="line">  store i32 <span class="number">3</span>, i32* %<span class="number">7</span>, align <span class="number">4</span></span><br><span class="line">  ret i32 <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">attributes #<span class="number">0</span> = &#123; noinline nounwind optnone ssp uwtable <span class="string">"correctly-rounded-divide-sqrt-fp-math"</span>=<span class="string">"false"</span> <span class="string">"disable-tail-calls"</span>=<span class="string">"false"</span> <span class="string">"less-precise-fpmad"</span>=<span class="string">"false"</span> <span class="string">"no-frame-pointer-elim"</span>=<span class="string">"true"</span> <span class="string">"no-frame-pointer-elim-non-leaf"</span> <span class="string">"no-infs-fp-math"</span>=<span class="string">"false"</span> <span class="string">"no-jump-tables"</span>=<span class="string">"false"</span> <span class="string">"no-nans-fp-math"</span>=<span class="string">"false"</span> <span class="string">"no-signed-zeros-fp-math"</span>=<span class="string">"false"</span> <span class="string">"no-trapping-math"</span>=<span class="string">"false"</span> <span class="string">"stack-protector-buffer-size"</span>=<span class="string">"8"</span> <span class="string">"target-cpu"</span>=<span class="string">"penryn"</span> <span class="string">"target-features"</span>=<span class="string">"+cx16,+fxsr,+mmx,+sse,+sse2,+sse3,+sse4.1,+ssse3,+x87"</span> <span class="string">"unsafe-fp-math"</span>=<span class="string">"false"</span> <span class="string">"use-soft-float"</span>=<span class="string">"false"</span> &#125;</span><br><span class="line"></span><br><span class="line">!llvm.<span class="keyword">module</span>.flags = !&#123;!<span class="number">0</span>, !<span class="number">1</span>, !<span class="number">2</span>, !<span class="number">3</span>, !<span class="number">4</span>, !<span class="number">5</span>, !<span class="number">6</span>&#125;</span><br><span class="line">!llvm.ident = !&#123;!<span class="number">7</span>&#125;</span><br><span class="line"></span><br><span class="line">!<span class="number">0</span> = !&#123;i32 <span class="number">1</span>, !<span class="string">"Objective-C Version"</span>, i32 <span class="number">2</span>&#125;</span><br><span class="line">!<span class="number">1</span> = !&#123;i32 <span class="number">1</span>, !<span class="string">"Objective-C Image Info Version"</span>, i32 <span class="number">0</span>&#125;</span><br><span class="line">!<span class="number">2</span> = !&#123;i32 <span class="number">1</span>, !<span class="string">"Objective-C Image Info Section"</span>, !<span class="string">"__DATA,__objc_imageinfo,regular,no_dead_strip"</span>&#125;</span><br><span class="line">!<span class="number">3</span> = !&#123;i32 <span class="number">4</span>, !<span class="string">"Objective-C Garbage Collection"</span>, i32 <span class="number">0</span>&#125;</span><br><span class="line">!<span class="number">4</span> = !&#123;i32 <span class="number">1</span>, !<span class="string">"Objective-C Class Properties"</span>, i32 <span class="number">64</span>&#125;</span><br><span class="line">!<span class="number">5</span> = !&#123;i32 <span class="number">1</span>, !<span class="string">"wchar_size"</span>, i32 <span class="number">4</span>&#125;</span><br><span class="line">!<span class="number">6</span> = !&#123;i32 <span class="number">7</span>, !<span class="string">"PIC Level"</span>, i32 <span class="number">2</span>&#125;</span><br><span class="line">!<span class="number">7</span> = !&#123;!<span class="string">"Apple LLVM version 9.1.0 (clang-902.0.39.2)"</span>&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><ul>
+<li><p>生成字节码</p>
+<blockquote>
+<p>clang -emit-llvm -c main.m -o main.bc</p>
+</blockquote>
+</li>
+<li><p>生成汇编</p>
+<blockquote>
+<p>clang -S -fobjc-arc main.m -o main.s</p>
+</blockquote>
+</li>
+<li><p>生成目标文件</p>
+<blockquote>
+<p>clang -fmodules -c main.m -o main.o</p>
+</blockquote>
+</li>
+<li><p>生成可执行文件</p>
+<blockquote>
+<p>clang main.o -o main</p>
+</blockquote>
+</li>
+</ul>
+<h1 id="0x03-第一个插件"><a href="#0x03-第一个插件" class="headerlink" title="0x03 第一个插件"></a>0x03 第一个插件</h1><h3 id="初始化一个插件项目"><a href="#初始化一个插件项目" class="headerlink" title="初始化一个插件项目"></a>初始化一个插件项目</h3><p>&emsp;&emsp;打开源码路径llvm/tools/clang/example，example目录下新建目录，此例中为DemoPlugin。</p>
+<p>&emsp;&emsp;接着，修改example目录的CMakeLists.txt文件，添加如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">add_subdirectory(DemoPlugin)</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;来到testPlugin目录，新建如下三个文件</p>
+<ul>
+<li>CMakeLists.txt</li>
+<li>DemoPlugin.exports</li>
+<li>DemoPlugin.cpp</li>
+</ul>
+<p>&emsp;&emsp;其中CMakeLists.txt内容如下，可以参考example目录下其他例子的CMakeLists.txt内容。</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># If we don't need RTTI or EH, there's no reason to export anything</span></span><br><span class="line"><span class="comment"># from the plugin.</span></span><br><span class="line">if( NOT MSVC ) </span><br><span class="line">  if( NOT LLVM_REQUIRES_RTTI )</span><br><span class="line">    if( NOT LLVM_REQUIRES_EH )</span><br><span class="line">      set(LLVM_EXPORTED_SYMBOL_FILE $&#123;CMAKE_CURRENT_SOURCE_DIR&#125;/DemoPlugin.exports)</span><br><span class="line">    <span class="keyword">endif</span>()</span><br><span class="line">  <span class="keyword">endif</span>()</span><br><span class="line"><span class="keyword">endif</span>()</span><br><span class="line"></span><br><span class="line">add_llvm_loadable_module(DemoPlugin DemoPlugin.cpp PLUGIN_TOOL clang)</span><br><span class="line"></span><br><span class="line">if(LLVM_ENABLE_PLUGINS AND (WIN32 OR CYGWIN))</span><br><span class="line">  target_link_libraries(DemoPlugin PRIVATE</span><br><span class="line">    clangAST</span><br><span class="line">    clangBasic</span><br><span class="line">    clangFrontend</span><br><span class="line">    LLVMSupport</span><br><span class="line">    )</span><br><span class="line"><span class="keyword">endif</span>()</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;然后开始最重要的testPlugin.cpp代码编写，</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"clang/Frontend/FrontendPluginRegistry.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"clang/AST/AST.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"clang/AST/ASTConsumer.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"clang/Frontend/CompilerInstance.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> clang;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">DemoPluginConsumer</span> :</span> <span class="keyword">public</span> ASTConsumer</span><br><span class="line">    &#123;</span><br><span class="line">    CompilerInstance &amp;Instance;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">set</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; ParsedTemplates;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        DemoPluginConsumer(CompilerInstance &amp;Instance,</span><br><span class="line">                               <span class="built_in">std</span>::<span class="built_in">set</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; ParsedTemplates)</span><br><span class="line">        : Instance(Instance), ParsedTemplates(ParsedTemplates) &#123;&#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">DemoPluginASTAction</span> :</span> <span class="keyword">public</span> PluginASTAction</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">set</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; ParsedTemplates;</span><br><span class="line">    <span class="keyword">protected</span>:</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ASTConsumer&gt; CreateASTConsumer(CompilerInstance &amp;CI,</span><br><span class="line">                                                       llvm::StringRef) override</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> llvm::make_unique&lt;DemoPluginConsumer&gt;(CI, ParsedTemplates);</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">// 插件的入口函数</span></span><br><span class="line">        <span class="function"><span class="keyword">bool</span> <span class="title">ParseArgs</span><span class="params">(<span class="keyword">const</span> CompilerInstance &amp;CI,</span></span></span><br><span class="line"><span class="function"><span class="params">                       <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &amp;args)</span> override </span>&#123;</span><br><span class="line"></span><br><span class="line">            DiagnosticsEngine &amp;D = CI.getDiagnostics();</span><br><span class="line">            <span class="comment">// Report的作用是向编译器报错</span></span><br><span class="line">            D.Report(D.getCustomDiagID(DiagnosticsEngine::Error,</span><br><span class="line">                                       <span class="string">"Hello Plugin"</span>));</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> clang::FrontendPluginRegistry::Add&lt;DemoPluginASTAction&gt;</span><br><span class="line">X(<span class="string">"DemoPlugin"</span>, <span class="string">"demo plugin"</span>);</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;编译，在我们的之前编译源码时新建的目录</p>
+<ul>
+<li><p>cmake</p>
+<blockquote>
+<ul>
+<li>cmake  llvm源代码目录</li>
+<li>cmake –build .</li>
+<li>make DemoPlugin </li>
+<li>插件出现在lib目录下，DemoPlugin.dylib</li>
+</ul>
+</blockquote>
+</li>
+<li><p>Xcode</p>
+<blockquote>
+<ul>
+<li>cmake -G Xcode .llvm源代码目录 -DCMAKE_BUILD_TYPE:STRING=MinSizeRel</li>
+<li>打开LLVM.xcodeproj</li>
+<li>选择Automatically Create Schemes</li>
+<li>编译clang、DemoPlugin</li>
+<li>插件出现在Debug/lib目录下，DemoPlugin.dylib</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<h3 id="配置Xcode"><a href="#配置Xcode" class="headerlink" title="配置Xcode"></a>配置Xcode</h3><p>&emsp;&emsp;Xcode的Build Setting里的Other C Flags添加如下，也就是DemoPlugin.dylib所在目录</p>
+<blockquote>
+<p>-Xclang -load -Xclang /Users/ex-lifenglei/Desktop/llvm/myBuild/lib/DemoPlugin.dylib -Xclang -add-plugin -Xclang DemoPlugin</p>
+</blockquote>
+<p> <img src="buid_setting.png" alt="Build_Setting">  </p>
+<p>&emsp;&emsp;这时，我们build下我们的项目大多数会遇到下面的报错</p>
+<p><img src="build_error.png" alt="Build_Error">  </p>
+<p>&emsp;&emsp;这是因为Xcode的Clang版本跟我们自己编译的Clang版本不一致。Clang插件需要对应的Clang版本来加载。所以我们还得修改Xcode指定的Clang。在Xcode的Build Setting里新增两个自定义项。</p>
+<blockquote>
+<p>CC = /Users/ex-lifenglei/Desktop/llvm/myBuild/bin/clang-7</p>
+<p>CXX = /Users/ex-lifenglei/Desktop/llvm/myBuild/bin/clang-7</p>
+</blockquote>
+<p><img src="build_setting_2.png" alt="Build_Setting">  </p>
+<p>&emsp;&emsp;然而在Xcode 9版本上，继续报错了，如下</p>
+<p><img src="build_error_2.png" alt="Build_Error">  </p>
+<p>&emsp;&emsp;解决办法就是关掉Build Setting里的<code>Index-While-Building</code></p>
+<p><img src="build_error_3.png" alt="Build_Setting">  </p>
+<p>&emsp;&emsp;紧接着再次编译，我们成功编译失败，那是当然的，我们本来就设置了一个编译错误提示，说明我们的插件成功运行了！！！</p>
+<p><img src="build_success.png" alt="Build_Success">  </p>
+<p>&emsp;&emsp;但是，因为这里是error，所以编译终止了，如果上面代码改成Warning让代码继续执行下去的话，可能会遇到下面这个错误</p>
+<p><img src="build_error_4.png" alt="Build_Error"> </p>
+<p>&emsp;&emsp;解决方法就是把Xcode程序下的<code>libarclite_iphonesimulator</code>拷贝到编译目录下的../lib/arc下。如果是真机，也是同样的方法把<code>libarclite_iphoneos.a</code>复制过来。</p>
+<blockquote>
+<p><code>/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/arc/libarclite_iphonesimulator.a</code></p>
+</blockquote>
+<p>&emsp;&emsp;我们再做个试验，我们把所有的类名和方法给打出来，代码如下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"clang/Frontend/FrontendPluginRegistry.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"clang/AST/AST.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"clang/AST/ASTConsumer.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"clang/AST/RecursiveASTVisitor.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"clang/Frontend/CompilerInstance.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> clang;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 可以深度优先搜索整个AST，并访问每一个基类，遍历需要处理的节点</span></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">DemoPluginVisitor</span> :</span> <span class="keyword">public</span> RecursiveASTVisitor&lt;DemoPluginVisitor&gt;</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        CompilerInstance &amp;Instance;</span><br><span class="line">        ASTContext *Context;</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">void</span> <span class="title">setASTContext</span> <span class="params">(ASTContext &amp;context)</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">this</span> -&gt; Context = &amp;context;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        DemoPluginVisitor (CompilerInstance &amp;Instance)</span><br><span class="line">        :Instance(Instance) &#123;&#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 查找类名</span></span><br><span class="line">        <span class="function"><span class="keyword">bool</span> <span class="title">VisitObjCInterfaceDecl</span><span class="params">(ObjCInterfaceDecl *declaration)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span>(isUserSourceCode(declaration)) &#123;</span><br><span class="line">                DiagnosticsEngine &amp;D = Instance.getDiagnostics();</span><br><span class="line">                <span class="keyword">unsigned</span> diagID = D.getCustomDiagID(DiagnosticsEngine::Warning, <span class="string">"查找到一个类名: %0"</span>);</span><br><span class="line">                D.Report(declaration-&gt;getLocStart(), diagID) &lt;&lt; declaration-&gt;getName();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 查找方法名</span></span><br><span class="line">        <span class="function"><span class="keyword">bool</span> <span class="title">VisitObjCMethodDecl</span><span class="params">(ObjCMethodDecl *declaration)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span>(isUserSourceCode(declaration)) &#123;</span><br><span class="line">                DiagnosticsEngine &amp;D = Instance.getDiagnostics();</span><br><span class="line">                <span class="keyword">unsigned</span> diagID = D.getCustomDiagID(DiagnosticsEngine::Warning, <span class="string">"查找到一个方法名: %0"</span>);</span><br><span class="line"><span class="comment">//                D.Report(declaration-&gt;getLocStart(), diagID).AddString(declaration-&gt;getSelector().getAsString());</span></span><br><span class="line">                 D.Report(declaration-&gt;getLocStart(), diagID) &lt;&lt; declaration-&gt;getSelector().getAsString();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 是否用户代码</span></span><br><span class="line">        <span class="function"><span class="keyword">bool</span> <span class="title">isUserSourceCode</span> <span class="params">(Decl *decl)</span></span>&#123;</span><br><span class="line">            <span class="built_in">std</span>::<span class="built_in">string</span> filename = Instance.getSourceManager().getFilename(decl-&gt;getSourceRange().getBegin()).str();</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> (filename.empty())</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            <span class="comment">// 定义非Xcode中的源码都是用户源码</span></span><br><span class="line">            <span class="keyword">if</span>(filename.find(<span class="string">"/Applications/Xcode.app/"</span>) == <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">DemoPluginConsumer</span> :</span> <span class="keyword">public</span> ASTConsumer</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        DemoPluginVisitor visitor;</span><br><span class="line">        CompilerInstance &amp;Instance;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">set</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; ParsedTemplates;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        DemoPluginConsumer(CompilerInstance &amp;Instance,</span><br><span class="line">                           <span class="built_in">std</span>::<span class="built_in">set</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; ParsedTemplates)</span><br><span class="line">        : Instance(Instance), ParsedTemplates(ParsedTemplates), visitor(Instance) &#123;&#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 每次分析到一个顶层定义时会回调此函数，返回true表示处理</span></span><br><span class="line">        <span class="function"><span class="keyword">bool</span> <span class="title">HandleTopLevelDecl</span><span class="params">(DeclGroupRef DG)</span> override</span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// ASTConsumer的入口函数</span></span><br><span class="line">        <span class="function"><span class="keyword">void</span> <span class="title">HandleTranslationUnit</span><span class="params">(ASTContext&amp; context)</span> override</span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            visitor.setASTContext(context);</span><br><span class="line">            visitor.TraverseDecl(context.getTranslationUnitDecl());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">DemoPluginASTAction</span> :</span> <span class="keyword">public</span> PluginASTAction</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">set</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; ParsedTemplates;</span><br><span class="line">    <span class="keyword">protected</span>:</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">unique_ptr</span>&lt;ASTConsumer&gt; CreateASTConsumer(CompilerInstance &amp;CI,</span><br><span class="line">                                                       llvm::StringRef) override</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> llvm::make_unique&lt;DemoPluginConsumer&gt;(CI, ParsedTemplates);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 插件的入口函数</span></span><br><span class="line">        <span class="function"><span class="keyword">bool</span> <span class="title">ParseArgs</span><span class="params">(<span class="keyword">const</span> CompilerInstance &amp;CI,</span></span></span><br><span class="line"><span class="function"><span class="params">                       <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &amp;args)</span> override </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> clang::FrontendPluginRegistry::Add&lt;DemoPluginASTAction&gt;</span><br><span class="line">X(<span class="string">"DemoPlugin"</span>, <span class="string">"demo plugin"</span>);</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;运行结果如下，我们所有的类名和方法名都被打出来了。</p>
+<p><img src="build_demo_1.png" alt="Build_Demo"> </p>
+<p>&emsp;&emsp;更多文档查看：<a href="https://clang.llvm.org/doxygen/namespaceclang.html" target="_blank" rel="noopener">https://clang.llvm.org/doxygen/namespaceclang.html</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/30/iOS逆向的基本操作/" rel="next" title="iOS逆向的基本操作">
+                <i class="fa fa-chevron-left"></i> iOS逆向的基本操作
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">朝暮</p>
+              <p class="site-description motion-element" itemprop="description">联系方式：leylfl@foxmail.com</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-配置"><span class="nav-number">1.</span> <span class="nav-text">0x01 配置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-试玩"><span class="nav-number">2.</span> <span class="nav-text">0x02 试玩</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#预处理"><span class="nav-number">2.0.1.</span> <span class="nav-text">预处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#词法分析"><span class="nav-number">2.0.2.</span> <span class="nav-text">词法分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#语法分析"><span class="nav-number">2.0.3.</span> <span class="nav-text">语法分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成IR"><span class="nav-number">2.0.4.</span> <span class="nav-text">生成IR</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他"><span class="nav-number">2.0.5.</span> <span class="nav-text">其他</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-第一个插件"><span class="nav-number">3.</span> <span class="nav-text">0x03 第一个插件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#初始化一个插件项目"><span class="nav-number">3.0.1.</span> <span class="nav-text">初始化一个插件项目</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置Xcode"><span class="nav-number">3.0.2.</span> <span class="nav-text">配置Xcode</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">朝暮</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

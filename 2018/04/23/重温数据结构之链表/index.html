@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="&amp;emsp;&amp;emsp;数据结构是用来存放和管理各种数据（比如插入、删除、查找和更新等）的一种程序结构，常见的数据结构有数组、字符串、链表、队列、栈、树、HASH表和图等。&amp;emsp;&amp;emsp;而算法是指解决一个问题的方法及其实现。算法可以理解为由基本运算及规定的运算顺序所构成的完整的解题步骤。比如各种排序方法，折半查找都是常见的算法。算法的判断标准包括时间复杂度和空间复杂度。 0x01 时间复">
+<meta property="og:type" content="article">
+<meta property="og:title" content="重温数据结构之链表">
+<meta property="og:url" content="https://leylfl.github.io/2018/04/23/重温数据结构之链表/index.html">
+<meta property="og:site_name" content="朝暮的闲暇时刻">
+<meta property="og:description" content="&amp;emsp;&amp;emsp;数据结构是用来存放和管理各种数据（比如插入、删除、查找和更新等）的一种程序结构，常见的数据结构有数组、字符串、链表、队列、栈、树、HASH表和图等。&amp;emsp;&amp;emsp;而算法是指解决一个问题的方法及其实现。算法可以理解为由基本运算及规定的运算顺序所构成的完整的解题步骤。比如各种排序方法，折半查找都是常见的算法。算法的判断标准包括时间复杂度和空间复杂度。 0x01 时间复">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-04-24T02:57:15.195Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="重温数据结构之链表">
+<meta name="twitter:description" content="&amp;emsp;&amp;emsp;数据结构是用来存放和管理各种数据（比如插入、删除、查找和更新等）的一种程序结构，常见的数据结构有数组、字符串、链表、队列、栈、树、HASH表和图等。&amp;emsp;&amp;emsp;而算法是指解决一个问题的方法及其实现。算法可以理解为由基本运算及规定的运算顺序所构成的完整的解题步骤。比如各种排序方法，折半查找都是常见的算法。算法的判断标准包括时间复杂度和空间复杂度。 0x01 时间复">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://leylfl.github.io/2018/04/23/重温数据结构之链表/"/>
+
+
+
+
+
+  <title>重温数据结构之链表 | 朝暮的闲暇时刻</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">朝暮的闲暇时刻</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://leylfl.github.io/2018/04/23/重温数据结构之链表/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="朝暮">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="朝暮的闲暇时刻">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">重温数据结构之链表</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-23T09:42:23+08:00">
+                2018-04-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/数据结构/" itemprop="url" rel="index">
+                    <span itemprop="name">数据结构</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&emsp;&emsp;数据结构是用来存放和管理各种数据（比如插入、删除、查找和更新等）的一种程序结构，常见的数据结构有数组、字符串、链表、队列、栈、树、HASH表和图等。<br>&emsp;&emsp;而算法是指解决一个问题的方法及其实现。算法可以理解为由基本运算及规定的运算顺序所构成的完整的解题步骤。比如各种排序方法，折半查找都是常见的算法。算法的判断标准包括时间复杂度和空间复杂度。</p>
+<h1 id="0x01-时间复杂度和空间复杂度"><a href="#0x01-时间复杂度和空间复杂度" class="headerlink" title="0x01 时间复杂度和空间复杂度"></a>0x01 时间复杂度和空间复杂度</h1><h3 id="1-时间复杂度"><a href="#1-时间复杂度" class="headerlink" title="1. 时间复杂度"></a>1. 时间复杂度</h3><p>&emsp;&emsp;算法的时间复杂度是指执行算法所需的计算工作量。一个算法花费的时间与算法中语句的执行次数成正比例，哪个算法中语句执行次数多，它花费时间就多。一个算法中的语句执行次数称为语句频度或时间频度，记为T(n)，其中n为问题规模。<br>&emsp;&emsp;一般情况下，算法中基本操作重复执行的次数是问题规模n的某个函数。如T(n)=4n<sup>2</sup>+5n，或者8n<sup>2</sup>+1，那么时间复杂度都为：O(n<sup>2</sup>)，取最高幂，并去掉系数。<br>&emsp;&emsp;常见的时间复杂度有：常数阶O(1)，对数阶O(logn)，线性阶O(n)，线性对数阶O(nlogn)，平方阶O(n<sup>2</sup>)，立方阶O(n<sup>3</sup>)，…，k次方阶O(n<sup>k</sup>)，指数阶O(2<sup>n</sup>)。随着问题规模n的不断增大，上述时间复杂度不断增大，算法的执行效率越低。<br>&emsp;&emsp;计算的方法是看看有几重循环，只有一重则时间复杂度为O(n)，只有二重则时间复杂度为O(n<sup>2</sup>)，以此类推。如果有二分则为O(logn)，二分例如快速排序或二分查找，如果一个for循环套一个二分，那么时间复杂度则为O(nlogn)。</p>
+<h3 id="2-空间复杂度"><a href="#2-空间复杂度" class="headerlink" title="2. 空间复杂度"></a>2. 空间复杂度</h3><p>&emsp;&emsp;算法的空间复杂度是指算法需要消耗的内存空间。其计算和表示方法与时间复杂度类似，一般都用复杂度的渐近性来表示。同时间复杂度相比，空间复杂度的分析要简单的多。程序在运行时候动态分配的空间，以及递归栈所需的空间等。这部分的空间大小与算法有关，而那些静态的空间， 比如代码、常量以及简单的变量与空间复杂度无关。</p>
+<h1 id="0x01-单链表"><a href="#0x01-单链表" class="headerlink" title="0x01 单链表"></a>0x01 单链表</h1><p>&emsp;&emsp;链表通常由一连串节点组成，每个节点包含任意的实例数据和一个用来指向下一个节点地址的指针(next指针)。<br>&emsp;&emsp;使用链表结构可以克服数组需要预先知道数据大小的缺点，链表结构可以充分利用计算机内存空间，实现灵活的内存动态管理。但是链表失去了数组随机读取的优点，同时链表由于增加了节点的指针域，空间开销相对比较大。<br>&emsp;&emsp;链表在插入的时候可以达到O(1)的复杂度，但是在查找一个节点或者访问特定编号的节点需要O(n)的时间。<br>&emsp;&emsp;单链表源码如下：<br><figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#define ERROR   -1000</span></span><br><span class="line"><span class="meta">#define SUCCESS 1000</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#define STATUS int</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 节点结构</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> _node &#123;</span><br><span class="line">    <span class="keyword">int</span> val;</span><br><span class="line">    <span class="keyword">struct</span> _node *next;</span><br><span class="line">&#125;Node;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 链表结构</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> _nodeList &#123;</span><br><span class="line">    <span class="keyword">int</span> length;</span><br><span class="line">&#125;NodeList;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建一个空链表</span></span><br><span class="line">NodeList* CreateList() &#123;</span><br><span class="line">    NodeList *list = (NodeList *)malloc(<span class="keyword">sizeof</span>(NodeList));</span><br><span class="line">    <span class="keyword">if</span>(list != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        list-&gt;length = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> list;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 销毁一个链表</span></span><br><span class="line"><span class="keyword">void</span> DestroyList(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!list) <span class="keyword">return</span>;</span><br><span class="line">    </span><br><span class="line">    free(list);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清空一个链表</span></span><br><span class="line"><span class="keyword">void</span> ClearList(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!list) <span class="keyword">return</span>;</span><br><span class="line">    </span><br><span class="line">    list-&gt;length = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取链表长度</span></span><br><span class="line"><span class="keyword">int</span> GetListLength(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!list) <span class="keyword">return</span> ERROR;</span><br><span class="line">    <span class="keyword">return</span> list-&gt;length;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 插入节点</span></span><br><span class="line">STATUS InsertListNode(NodeList *list, Node *node, <span class="keyword">int</span> position) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; node != <span class="literal">NULL</span> &amp;&amp; position &gt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> ERROR;</span><br><span class="line">    </span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; position &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    node-&gt;next = currentNode-&gt;next;</span><br><span class="line">    currentNode-&gt;next = node;</span><br><span class="line">    list-&gt;length++;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> SUCCESS;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取某个位置的节点</span></span><br><span class="line">Node* GetListNode(NodeList *list, <span class="keyword">int</span> position) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; position &gt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    Node *node = <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; position &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    node = currentNode-&gt;next;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> node;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 删除某个位置的节点</span></span><br><span class="line">STATUS DeleteListNode(NodeList *list, <span class="keyword">int</span> position) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; position &gt; <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> ERROR;</span><br><span class="line">    </span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; position &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    Node *node = currentNode-&gt;next; <span class="comment">// 要删除的node</span></span><br><span class="line">    currentNode-&gt;next = node-&gt;next;</span><br><span class="line">    </span><br><span class="line">    list-&gt;length--;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> SUCCESS;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ViewController</span> ()</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ViewController</span></span></span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)viewDidLoad &#123;</span><br><span class="line">    [<span class="keyword">super</span> viewDidLoad];</span><br><span class="line">   </span><br><span class="line">    NodeList *list = CreateList();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">struct</span> _node n1;</span><br><span class="line">    <span class="keyword">struct</span> _node n2;</span><br><span class="line">    <span class="keyword">struct</span> _node n3;</span><br><span class="line">    </span><br><span class="line">    n1.val = <span class="number">1</span>;</span><br><span class="line">    n2.val = <span class="number">2</span>;</span><br><span class="line">    n3.val = <span class="number">3</span>;</span><br><span class="line">    </span><br><span class="line">    InsertListNode(list, (Node *)&amp;n1, <span class="number">0</span>);</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n2, <span class="number">1</span>);</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n3, <span class="number">2</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; GetListLength(list); i++) &#123;</span><br><span class="line">        Node *node = GetListNode(list, i);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"位置：%d的值：%d"</span>, i, node-&gt;val);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    DeleteListNode(list, <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"**删除后的链表**\n"</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; GetListLength(list); i++) &#123;</span><br><span class="line">        Node *node = GetListNode(list, i);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"位置：%d的值：%d"</span>, i, node-&gt;val);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    DestroyList(list);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 运行结果：</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-23</span> <span class="number">16</span>:<span class="number">08</span>:<span class="number">08.572926</span>+<span class="number">0800</span> testData[<span class="number">34765</span>:<span class="number">133946832</span>] 位置：<span class="number">0</span>的值：<span class="number">1</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-23</span> <span class="number">16</span>:<span class="number">08</span>:<span class="number">08.573132</span>+<span class="number">0800</span> testData[<span class="number">34765</span>:<span class="number">133946832</span>] 位置：<span class="number">1</span>的值：<span class="number">2</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-23</span> <span class="number">16</span>:<span class="number">08</span>:<span class="number">08.575485</span>+<span class="number">0800</span> testData[<span class="number">34765</span>:<span class="number">133946832</span>] 位置：<span class="number">2</span>的值：<span class="number">3</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-23</span> <span class="number">16</span>:<span class="number">08</span>:<span class="number">08.575660</span>+<span class="number">0800</span> testData[<span class="number">34765</span>:<span class="number">133946832</span>] **删除后的链表**</span><br><span class="line"></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-23</span> <span class="number">16</span>:<span class="number">08</span>:<span class="number">08.575789</span>+<span class="number">0800</span> testData[<span class="number">34765</span>:<span class="number">133946832</span>] 位置：<span class="number">0</span>的值：<span class="number">1</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-23</span> <span class="number">16</span>:<span class="number">08</span>:<span class="number">08.575915</span>+<span class="number">0800</span> testData[<span class="number">34765</span>:<span class="number">133946832</span>] 位置：<span class="number">1</span>的值：<span class="number">3</span></span><br></pre></td></tr></table></figure></p>
+<h1 id="0x02-循环链表"><a href="#0x02-循环链表" class="headerlink" title="0x02 循环链表"></a>0x02 循环链表</h1><p>&emsp;&emsp;循环链表即将链表中最后一个元素的next指针指向第一个元素。这样的链表，其任何节点都可以当做头结点，当第一个节点被重复访问时表示遍历结束。<br>&emsp;&emsp;源码将以约瑟夫问题展现，既：n个人围成一个圆圈，首先第1个人从1开始一个人一个人顺时针报数，报到第m个人，令其出列。然后再从下一个人开始从1顺时针报数，报到第m个人，再令 其出列，…，如此下去，求出列顺序。为了解决这个问题，我们定义一个浮标<br><figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#define ERROR   -1000</span></span><br><span class="line"><span class="meta">#define SUCCESS 1000</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#define STATUS int</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 节点结构</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> _node &#123;</span><br><span class="line">    <span class="keyword">int</span> val;</span><br><span class="line">    <span class="keyword">struct</span> _node *next;</span><br><span class="line">&#125;Node;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 链表结构</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> _nodeList &#123;</span><br><span class="line">    <span class="keyword">int</span> length;</span><br><span class="line">    Node *slider; <span class="comment">// 浮标</span></span><br><span class="line">&#125;NodeList;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建一个空链表</span></span><br><span class="line">NodeList* CreateList() &#123;</span><br><span class="line">    NodeList *list = (NodeList *)malloc(<span class="keyword">sizeof</span>(NodeList));</span><br><span class="line">    <span class="keyword">if</span>(list != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        list-&gt;length = <span class="number">0</span>;</span><br><span class="line">        list-&gt;slider = <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> list;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 销毁一个链表</span></span><br><span class="line"><span class="keyword">void</span> DestroyList(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!list) <span class="keyword">return</span>;</span><br><span class="line">    </span><br><span class="line">    free(list);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清空一个链表</span></span><br><span class="line"><span class="keyword">void</span> ClearList(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!list) <span class="keyword">return</span>;</span><br><span class="line">    </span><br><span class="line">    list-&gt;length = <span class="number">0</span>;</span><br><span class="line">    list-&gt;slider = <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取链表长度</span></span><br><span class="line"><span class="keyword">int</span> GetListLength(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!list) <span class="keyword">return</span> ERROR;</span><br><span class="line">    <span class="keyword">return</span> list-&gt;length;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取某个位置的节点</span></span><br><span class="line">Node* GetListNode(NodeList *list, <span class="keyword">int</span> position) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; position &gt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    Node *node = <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; position &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    node = currentNode-&gt;next;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> node;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 插入节点</span></span><br><span class="line">STATUS InsertListNode(NodeList *list, Node *node, <span class="keyword">int</span> position) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; node != <span class="literal">NULL</span> &amp;&amp; position &gt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> ERROR;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(list-&gt;length == <span class="number">0</span>) &#123;</span><br><span class="line">        list-&gt;slider = node;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// list结构体和node结构体相似，所以currentNode这时候的next值跟list的slider一样。所以链表循环自此形成</span></span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; position &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    node-&gt;next = currentNode-&gt;next;</span><br><span class="line">    currentNode-&gt;next = node;</span><br><span class="line">    list-&gt;length++;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果插入在第一个位置，需要重新将最后一个节点的next指针指向这个新的第一个节点</span></span><br><span class="line">    <span class="keyword">if</span>(currentNode == (Node *)list) &#123;</span><br><span class="line">        Node *lastNode = GetListNode(list, list-&gt;length - <span class="number">1</span>);</span><br><span class="line">        lastNode-&gt;next = node;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> SUCCESS;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 删除某个位置的节点</span></span><br><span class="line">STATUS DeleteListNode(NodeList *list, <span class="keyword">int</span> position) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; position &gt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> ERROR;</span><br><span class="line">    </span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; position &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    Node *node = currentNode-&gt;next; <span class="comment">// 要删除的node</span></span><br><span class="line">    currentNode-&gt;next = node-&gt;next;</span><br><span class="line">    </span><br><span class="line">    list-&gt;length--;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(list-&gt;length == <span class="number">0</span>) &#123;</span><br><span class="line">        list-&gt;slider = <span class="literal">NULL</span>;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        Node *firstNode = (Node *)list;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 如果删的是第一个节点，就把最后一个节点的next指针指向被删节点的下一个节点</span></span><br><span class="line">        <span class="keyword">if</span>(firstNode == node) &#123;</span><br><span class="line">            Node *lastNode = GetListNode(list, list-&gt;length - <span class="number">1</span>);</span><br><span class="line">            lastNode-&gt;next = node-&gt;next;</span><br><span class="line">        <span class="comment">// 如果删的是浮标节点，就把浮标节点的next指针指向被删节点的下一个节点</span></span><br><span class="line">        &#125;<span class="keyword">else</span> <span class="keyword">if</span> (node == list-&gt;slider) &#123;</span><br><span class="line">            list-&gt;slider = node-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> SUCCESS;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 删除指定节点</span></span><br><span class="line">STATUS DeleteListSpecialNode(NodeList *list, Node *node) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; node != <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> ERROR;</span><br><span class="line">    </span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; list-&gt;length &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span>(currentNode-&gt;next == node) <span class="keyword">break</span>;</span><br><span class="line">        </span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> DeleteListNode(list, i);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 重置浮标</span></span><br><span class="line"><span class="keyword">void</span> ResetListSlider(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(list == <span class="literal">NULL</span>) <span class="keyword">return</span>;</span><br><span class="line">    </span><br><span class="line">    list-&gt;slider = ((Node *)list)-&gt;next;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取浮标指向的节点</span></span><br><span class="line">Node* GetListSlider(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(list == <span class="literal">NULL</span>) <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> list-&gt;slider;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将浮标指向下一个节点</span></span><br><span class="line">Node* NextListSlider(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(list == <span class="literal">NULL</span>) <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    Node *node = list-&gt;slider;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(list-&gt;slider == <span class="literal">NULL</span>)&#123;</span><br><span class="line">        ResetListSlider(list);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        list-&gt;slider = list-&gt;slider-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> node;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ViewController</span> ()</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ViewController</span></span></span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)viewDidLoad &#123;</span><br><span class="line">    [<span class="keyword">super</span> viewDidLoad];</span><br><span class="line">   </span><br><span class="line">    NodeList *list = CreateList();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">struct</span> _node n1;</span><br><span class="line">    <span class="keyword">struct</span> _node n2;</span><br><span class="line">    <span class="keyword">struct</span> _node n3;</span><br><span class="line">    <span class="keyword">struct</span> _node n4;</span><br><span class="line">    <span class="keyword">struct</span> _node n5;</span><br><span class="line">    <span class="keyword">struct</span> _node n6;</span><br><span class="line">    <span class="keyword">struct</span> _node n7;</span><br><span class="line">    <span class="keyword">struct</span> _node n8;</span><br><span class="line">    </span><br><span class="line">    n1.val = <span class="number">1</span>;</span><br><span class="line">    n2.val = <span class="number">2</span>;</span><br><span class="line">    n3.val = <span class="number">3</span>;</span><br><span class="line">    n4.val = <span class="number">4</span>;</span><br><span class="line">    n5.val = <span class="number">5</span>;</span><br><span class="line">    n6.val = <span class="number">6</span>;</span><br><span class="line">    n7.val = <span class="number">7</span>;</span><br><span class="line">    n8.val = <span class="number">8</span>;</span><br><span class="line">    </span><br><span class="line">    InsertListNode(list, (Node *)&amp;n1, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n2, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n3, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n4, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n5, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n6, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n7, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n8, GetListLength(list));</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; GetListLength(list); i++) &#123;</span><br><span class="line">        Node *node = GetListNode(list, i);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"位置：%d的值：%d"</span>, i, node-&gt;val);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"------------\n"</span>);</span><br><span class="line">    ResetListSlider(list);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span> (GetListLength(list) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="number">3</span>; i++) &#123;</span><br><span class="line">            NextListSlider(list);</span><br><span class="line">        &#125;</span><br><span class="line">        Node *node = GetListSlider(list);</span><br><span class="line">        DeleteListSpecialNode(list, node);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"出列:%d"</span>, node-&gt;val);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    DestroyList(list);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 运行结果：</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.752025</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 位置：<span class="number">0</span>的值：<span class="number">1</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.752217</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 位置：<span class="number">1</span>的值：<span class="number">2</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.752373</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 位置：<span class="number">2</span>的值：<span class="number">3</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.752499</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 位置：<span class="number">3</span>的值：<span class="number">4</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.752622</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 位置：<span class="number">4</span>的值：<span class="number">5</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.752755</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 位置：<span class="number">5</span>的值：<span class="number">6</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.752875</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 位置：<span class="number">6</span>的值：<span class="number">7</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.752998</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 位置：<span class="number">7</span>的值：<span class="number">8</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.753101</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] ------------</span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.753233</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 出列:<span class="number">3</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.753356</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 出列:<span class="number">6</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.753494</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 出列:<span class="number">1</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.753635</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 出列:<span class="number">4</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.753787</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 出列:<span class="number">7</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.753925</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 出列:<span class="number">2</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.754040</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 出列:<span class="number">5</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">09</span>:<span class="number">22</span>:<span class="number">22.754307</span>+<span class="number">0800</span> testData[<span class="number">39552</span>:<span class="number">141135212</span>] 出列:<span class="number">8</span></span><br></pre></td></tr></table></figure></p>
+<h1 id="0x03-双向链表"><a href="#0x03-双向链表" class="headerlink" title="0x03 双向链表"></a>0x03 双向链表</h1><p>&emsp;&emsp;双向链表可以解决单链表无法直接访问前驱元素的问题，单链表的逆序访问时一个极其耗时的操作。所以在双链表中，新增一个指向前驱的指针。<br><figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#define ERROR   -1000</span></span><br><span class="line"><span class="meta">#define SUCCESS 1000</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#define STATUS int</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 节点结构</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> _node &#123;</span><br><span class="line">    <span class="keyword">int</span> val;</span><br><span class="line">    <span class="keyword">struct</span> _node *next;</span><br><span class="line">    <span class="keyword">struct</span> _node *pre;</span><br><span class="line">&#125;Node;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 链表结构</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> _nodeList &#123;</span><br><span class="line">    <span class="keyword">int</span> length;</span><br><span class="line">    Node *slider; <span class="comment">// 浮标</span></span><br><span class="line">&#125;NodeList;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建一个空链表</span></span><br><span class="line">NodeList* CreateList() &#123;</span><br><span class="line">    NodeList *list = (NodeList *)malloc(<span class="keyword">sizeof</span>(NodeList));</span><br><span class="line">    <span class="keyword">if</span>(list != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        list-&gt;length = <span class="number">0</span>;</span><br><span class="line">        list-&gt;slider = <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> list;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 销毁一个链表</span></span><br><span class="line"><span class="keyword">void</span> DestroyList(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!list) <span class="keyword">return</span>;</span><br><span class="line">    </span><br><span class="line">    free(list);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清空一个链表</span></span><br><span class="line"><span class="keyword">void</span> ClearList(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!list) <span class="keyword">return</span>;</span><br><span class="line">    </span><br><span class="line">    list-&gt;length = <span class="number">0</span>;</span><br><span class="line">    list-&gt;slider = <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取链表长度</span></span><br><span class="line"><span class="keyword">int</span> GetListLength(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!list) <span class="keyword">return</span> ERROR;</span><br><span class="line">    <span class="keyword">return</span> list-&gt;length;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取某个位置的节点</span></span><br><span class="line">Node* GetListNode(NodeList *list, <span class="keyword">int</span> position) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; position &gt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    Node *node = <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; position &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    node = currentNode-&gt;next;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> node;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 插入节点</span></span><br><span class="line">STATUS InsertListNode(NodeList *list, Node *node, <span class="keyword">int</span> position) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; node != <span class="literal">NULL</span> &amp;&amp; position &gt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> ERROR;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(list-&gt;length == <span class="number">0</span>) &#123;</span><br><span class="line">        list-&gt;slider = node;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// list结构体和node结构体相似，所以currentNode这时候的next值跟list的slider一样。所以链表循环自此形成</span></span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; position &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    node-&gt;next = currentNode-&gt;next;</span><br><span class="line">    currentNode-&gt;next-&gt;pre = node;</span><br><span class="line">    currentNode-&gt;next = node;</span><br><span class="line">    node-&gt;pre = currentNode;</span><br><span class="line">    list-&gt;length++;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果插入在第一个位置，需要重新将最后一个节点的next指针指向这个新的第一个节点</span></span><br><span class="line">    <span class="keyword">if</span>(currentNode == (Node *)list) &#123;</span><br><span class="line">        Node *lastNode = GetListNode(list, list-&gt;length - <span class="number">1</span>);</span><br><span class="line">        lastNode-&gt;next = node;</span><br><span class="line">        node-&gt;pre = lastNode;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> SUCCESS;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 删除某个位置的节点</span></span><br><span class="line">STATUS DeleteListNode(NodeList *list, <span class="keyword">int</span> position) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; position &gt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> ERROR;</span><br><span class="line">    </span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; position &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    Node *node = currentNode-&gt;next; <span class="comment">// 要删除的node</span></span><br><span class="line">    currentNode-&gt;next = node-&gt;next;</span><br><span class="line">    node-&gt;next-&gt;pre = currentNode;</span><br><span class="line">    </span><br><span class="line">    list-&gt;length--;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(list-&gt;length == <span class="number">0</span>) &#123;</span><br><span class="line">        list-&gt;slider = <span class="literal">NULL</span>;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        Node *firstNode = (Node *)list;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 如果删的是第一个节点，就把最后一个节点的next指针指向被删节点的下一个节点</span></span><br><span class="line">        <span class="keyword">if</span>(firstNode == node) &#123;</span><br><span class="line">            Node *lastNode = GetListNode(list, list-&gt;length - <span class="number">1</span>);</span><br><span class="line">            lastNode-&gt;next = node-&gt;next;</span><br><span class="line">        <span class="comment">// 如果删的是浮标节点，就把浮标节点的next指针指向被删节点的下一个节点</span></span><br><span class="line">        &#125;<span class="keyword">else</span> <span class="keyword">if</span> (node == list-&gt;slider) &#123;</span><br><span class="line">            list-&gt;slider = node-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> SUCCESS;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 删除指定节点</span></span><br><span class="line">STATUS DeleteListSpecialNode(NodeList *list, Node *node) &#123;</span><br><span class="line">    <span class="keyword">bool</span> status = list != <span class="literal">NULL</span> &amp;&amp; node != <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">if</span>(!status) <span class="keyword">return</span> ERROR;</span><br><span class="line">    </span><br><span class="line">    Node *currentNode = (Node *)list;</span><br><span class="line">    <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; list-&gt;length &amp;&amp; currentNode-&gt;next != <span class="literal">NULL</span>; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span>(currentNode-&gt;next == node) <span class="keyword">break</span>;</span><br><span class="line">        </span><br><span class="line">        currentNode = currentNode-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> DeleteListNode(list, i);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 重置游标</span></span><br><span class="line"><span class="keyword">void</span> ResetListSlider(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(list == <span class="literal">NULL</span>) <span class="keyword">return</span>;</span><br><span class="line">    </span><br><span class="line">    list-&gt;slider = ((Node *)list)-&gt;next;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取游标指向的节点</span></span><br><span class="line">Node* GetListSlider(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(list == <span class="literal">NULL</span>) <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> list-&gt;slider;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将游标指向下一个节点</span></span><br><span class="line">Node* NextListSlider(NodeList *list) &#123;</span><br><span class="line">    <span class="keyword">if</span>(list == <span class="literal">NULL</span>) <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    Node *node = list-&gt;slider;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(list-&gt;slider == <span class="literal">NULL</span>)&#123;</span><br><span class="line">        ResetListSlider(list);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        list-&gt;slider = list-&gt;slider-&gt;next;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> node;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ViewController</span> ()</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ViewController</span></span></span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)viewDidLoad &#123;</span><br><span class="line">    [<span class="keyword">super</span> viewDidLoad];</span><br><span class="line">   </span><br><span class="line">    NodeList *list = CreateList();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">struct</span> _node n1;</span><br><span class="line">    <span class="keyword">struct</span> _node n2;</span><br><span class="line">    <span class="keyword">struct</span> _node n3;</span><br><span class="line">    <span class="keyword">struct</span> _node n4;</span><br><span class="line">    <span class="keyword">struct</span> _node n5;</span><br><span class="line">    <span class="keyword">struct</span> _node n6;</span><br><span class="line">    <span class="keyword">struct</span> _node n7;</span><br><span class="line">    <span class="keyword">struct</span> _node n8;</span><br><span class="line">    </span><br><span class="line">    n1.val = <span class="number">1</span>;</span><br><span class="line">    n2.val = <span class="number">2</span>;</span><br><span class="line">    n3.val = <span class="number">3</span>;</span><br><span class="line">    n4.val = <span class="number">4</span>;</span><br><span class="line">    n5.val = <span class="number">5</span>;</span><br><span class="line">    n6.val = <span class="number">6</span>;</span><br><span class="line">    n7.val = <span class="number">7</span>;</span><br><span class="line">    n8.val = <span class="number">8</span>;</span><br><span class="line">    </span><br><span class="line">    InsertListNode(list, (Node *)&amp;n1, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n2, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n3, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n4, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n5, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n6, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n7, GetListLength(list));</span><br><span class="line">    InsertListNode(list, (Node *)&amp;n8, GetListLength(list));</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; GetListLength(list); i++) &#123;</span><br><span class="line">        Node *node = GetListNode(list, i);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"出列:%d，其前值:%d，其后值:%d"</span>, node-&gt;val, node-&gt;pre-&gt;val, node-&gt;next-&gt;val);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    DestroyList(list);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 运行结果：</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">38</span>:<span class="number">34.810183</span>+<span class="number">0800</span> testData[<span class="number">48305</span>:<span class="number">141728412</span>] 出列:<span class="number">1</span>，其前值:<span class="number">8</span>，其后值:<span class="number">2</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">38</span>:<span class="number">34.810361</span>+<span class="number">0800</span> testData[<span class="number">48305</span>:<span class="number">141728412</span>] 出列:<span class="number">2</span>，其前值:<span class="number">1</span>，其后值:<span class="number">3</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">38</span>:<span class="number">34.810465</span>+<span class="number">0800</span> testData[<span class="number">48305</span>:<span class="number">141728412</span>] 出列:<span class="number">3</span>，其前值:<span class="number">2</span>，其后值:<span class="number">4</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">38</span>:<span class="number">34.810589</span>+<span class="number">0800</span> testData[<span class="number">48305</span>:<span class="number">141728412</span>] 出列:<span class="number">4</span>，其前值:<span class="number">3</span>，其后值:<span class="number">5</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">38</span>:<span class="number">34.810699</span>+<span class="number">0800</span> testData[<span class="number">48305</span>:<span class="number">141728412</span>] 出列:<span class="number">5</span>，其前值:<span class="number">4</span>，其后值:<span class="number">6</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">38</span>:<span class="number">34.810818</span>+<span class="number">0800</span> testData[<span class="number">48305</span>:<span class="number">141728412</span>] 出列:<span class="number">6</span>，其前值:<span class="number">5</span>，其后值:<span class="number">7</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">38</span>:<span class="number">34.810910</span>+<span class="number">0800</span> testData[<span class="number">48305</span>:<span class="number">141728412</span>] 出列:<span class="number">7</span>，其前值:<span class="number">6</span>，其后值:<span class="number">8</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">38</span>:<span class="number">34.811000</span>+<span class="number">0800</span> testData[<span class="number">48305</span>:<span class="number">141728412</span>] 出列:<span class="number">8</span>，其前值:<span class="number">7</span>，其后值:<span class="number">1</span></span><br></pre></td></tr></table></figure></p>
+<p>&emsp;&emsp;那么，如果不通过双向链表，一个单链表怎么反转呢？<br><figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = len<span class="number">-1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">    Node *node = GetListNode(list, i);</span><br><span class="line">    <span class="built_in">NSLog</span>(<span class="string">@"出列:%d"</span>, node-&gt;val);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 运行结果：</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.439705</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">1</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.439830</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">2</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.439925</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">3</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440032</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">4</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440128</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">5</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440233</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">6</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440325</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">7</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440432</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">8</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440512</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] ----开始反转-----</span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440594</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">8</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440667</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">7</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440741</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">6</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440815</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">5</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.440888</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">4</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.441030</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">3</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.441216</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">2</span></span><br><span class="line"><span class="number">2018</span><span class="number">-04</span><span class="number">-24</span> <span class="number">10</span>:<span class="number">56</span>:<span class="number">29.441386</span>+<span class="number">0800</span> testData[<span class="number">50135</span>:<span class="number">141858946</span>] 出列:<span class="number">1</span></span><br></pre></td></tr></table></figure></p>
+<p>&emsp;&emsp;这样就完成了这个需求。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/06/多线程中锁的应用/" rel="next" title="多线程中锁的应用">
+                <i class="fa fa-chevron-left"></i> 多线程中锁的应用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/04/24/重温数据结构之栈与队列/" rel="prev" title="重温数据结构之栈与队列">
+                重温数据结构之栈与队列 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">朝暮</p>
+              <p class="site-description motion-element" itemprop="description">联系方式：leylfl@foxmail.com</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-时间复杂度和空间复杂度"><span class="nav-number">1.</span> <span class="nav-text">0x01 时间复杂度和空间复杂度</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-时间复杂度"><span class="nav-number">1.0.1.</span> <span class="nav-text">1. 时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-空间复杂度"><span class="nav-number">1.0.2.</span> <span class="nav-text">2. 空间复杂度</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-单链表"><span class="nav-number">2.</span> <span class="nav-text">0x01 单链表</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-循环链表"><span class="nav-number">3.</span> <span class="nav-text">0x02 循环链表</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-双向链表"><span class="nav-number">4.</span> <span class="nav-text">0x03 双向链表</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">朝暮</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

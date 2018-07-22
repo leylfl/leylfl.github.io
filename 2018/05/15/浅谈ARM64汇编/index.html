@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="0x01 精简指令集RISC（Reduced Instruction Set Computer）&amp;emsp;&amp;emsp;ARM是RISC的代表，RISC具有以下几个特点：  简单的指令集：只提供很有限的操作   等长指令集：执行指令速度快且性能稳定，可将一条指令分割成若干个进程或线程，交由多个处理器同时执行。   Load/Store架构：CPU并不会对内存中的数据进行操作，所有的计算都要求在寄存">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浅谈ARM64汇编">
+<meta property="og:url" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/index.html">
+<meta property="og:site_name" content="朝暮的闲暇时刻">
+<meta property="og:description" content="0x01 精简指令集RISC（Reduced Instruction Set Computer）&amp;emsp;&amp;emsp;ARM是RISC的代表，RISC具有以下几个特点：  简单的指令集：只提供很有限的操作   等长指令集：执行指令速度快且性能稳定，可将一条指令分割成若干个进程或线程，交由多个处理器同时执行。   Load/Store架构：CPU并不会对内存中的数据进行操作，所有的计算都要求在寄存">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/CPSR01.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/CPSR02.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/ExpetionLevel1.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/sample_create.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/header_declarm.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/assemble_declarm.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/stack_01.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/stack_02.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/stack_03.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/stack_04.png">
+<meta property="og:updated_time" content="2018-05-21T10:19:42.041Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="浅谈ARM64汇编">
+<meta name="twitter:description" content="0x01 精简指令集RISC（Reduced Instruction Set Computer）&amp;emsp;&amp;emsp;ARM是RISC的代表，RISC具有以下几个特点：  简单的指令集：只提供很有限的操作   等长指令集：执行指令速度快且性能稳定，可将一条指令分割成若干个进程或线程，交由多个处理器同时执行。   Load/Store架构：CPU并不会对内存中的数据进行操作，所有的计算都要求在寄存">
+<meta name="twitter:image" content="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/CPSR01.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/"/>
+
+
+
+
+
+  <title>浅谈ARM64汇编 | 朝暮的闲暇时刻</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">朝暮的闲暇时刻</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://leylfl.github.io/2018/05/15/浅谈ARM64汇编/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="朝暮">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="朝暮的闲暇时刻">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">浅谈ARM64汇编</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-15T09:38:02+08:00">
+                2018-05-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/逆向/" itemprop="url" rel="index">
+                    <span itemprop="name">逆向</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="0x01-精简指令集RISC（Reduced-Instruction-Set-Computer）"><a href="#0x01-精简指令集RISC（Reduced-Instruction-Set-Computer）" class="headerlink" title="0x01 精简指令集RISC（Reduced Instruction Set Computer）"></a>0x01 精简指令集RISC（Reduced Instruction Set Computer）</h1><p>&emsp;&emsp;ARM是RISC的代表，RISC具有以下几个特点：</p>
+<ul>
+<li>简单的指令集：只提供很有限的操作  </li>
+<li>等长指令集：执行指令速度快且性能稳定，可将一条指令分割成若干个进程或线程，交由多个处理器同时执行。  </li>
+<li>Load/Store架构：CPU并不会对内存中的数据进行操作，所有的计算都要求在寄存器中完成，而寄存器和内存的通信由Load/Store指令完成。  </li>
+<li>更多的寄存器：基于RISC的处理器具有更多的通用寄存器可以使用，且每个寄存器都可以进行数据存储或寻址。  </li>
+<li>效率更高：RISC指令集能够非常有效地适合于采用流水线、超流水线和超标量技术，从而实现指令集并行操作，提高处理器的性能。</li>
+</ul>
+<h1 id="0x02-寄存器"><a href="#0x02-寄存器" class="headerlink" title="0x02 寄存器"></a>0x02 寄存器</h1><h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1. 简介"></a>1. 简介</h3><p>&emsp;&emsp;寄存器是CPU的一个组成部分，里面存放着指令、数据和地址等供CPU计算使用，速度比内存快。寄存器分为通用寄存器和专用寄存器。</p>
+<ul>
+<li><p>通用寄存器</p>
+<ul>
+<li><p>提供了31个64位通用寄存器，x0 ~ x30。</p>
+</li>
+<li><p>可以通过w0 ~ w30来访问这31个64位寄存器的低32位，写入时会将高32位清零。</p>
+<blockquote>
+<p>注：后面文章中wn其实也可以代表xn，它们之间只是位数不同。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>浮点寄存器</p>
+<ul>
+<li><p>v0 ~ v31，一共有32个浮点寄存器，每个寄存器大小是128位。分别可以用的方式来访问不同的位数。可以通过Bn、Hn、Sn、Dn、Qn来访问不同的位数。</p>
+<blockquote>
+<p>Bn：8位</p>
+<p>Hn：16位</p>
+<p>Sn：32位</p>
+<p>Dn：64位</p>
+<p>Qn：128位</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>特殊寄存器</p>
+<ul>
+<li><p>程序计数器</p>
+<ul>
+<li>pc，保存着当前CPU执行指令的地址。不能用作算数指令的源或目的地以及用作加载或存储指令。</li>
+</ul>
+</li>
+<li><p>堆栈指针</p>
+<ul>
+<li>sp，即x31，指向堆栈的顶部。sp不能被大多数指令引用， 但一些算术指令，例如ADD指令，可以读写当前的堆栈指针来调整函数中的堆栈指针。每个异常级别都有一个专用的SP寄存器。</li>
+<li>fp，即x29，帧指针，指向当前frame的栈底，也就是高地址。</li>
+</ul>
+</li>
+<li><p>链接寄存器</p>
+<ul>
+<li>lr，即x30，存储着函数的返回地址。</li>
+</ul>
+</li>
+<li><p>程序状态寄存器</p>
+<p>在汇编中通过状态寄存器来控制分支的执行。</p>
+<ul>
+<li>cpsr：与其他寄存器不太一样，其他寄存器用来存储数据的，但是这个寄存器是，按位起作用的，每一位都有专门的含义。</li>
+<li>spsr：当发生异常时，cpsr会存入spsr直到异常恢复再复制回cpsr。</li>
+</ul>
+<p><img src="CPSR01.png" alt="状态寄存器示意图1"> </p>
+<p><img src="CPSR02.png" alt="状态寄存器示意图2"> </p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-模式与异常等级"><a href="#2-模式与异常等级" class="headerlink" title="2. 模式与异常等级"></a>2. 模式与异常等级</h3><h4 id="2-1-模式"><a href="#2-1-模式" class="headerlink" title="2.1 模式"></a>2.1 模式</h4><ul>
+<li>用户模式(USR): ARM处理器正常程序执行状态。  </li>
+<li>快速中断模式(FIQ): 高速数据传输或通道处理。  </li>
+<li>外部中断模式(IRQ): 通用的中断处理。  </li>
+<li>管理模式(supervisor): 操作系统使用的保护模式。  </li>
+<li>数据访问终止模式(abort): 当数据或指令预取终止时进入该模式，可用于虚拟存储及存储保护。</li>
+<li>系统模式(system): 运行具有特权的操作系统任务。</li>
+<li>未定义指令终止模式(UND)：当未定义的指令执行时进入该模式。</li>
+<li>hyp：用于虚拟化扩展。</li>
+<li>monitor：用于Security扩展。</li>
+</ul>
+<h4 id="2-2-异常等级"><a href="#2-2-异常等级" class="headerlink" title="2.2 异常等级"></a>2.2 异常等级</h4><ul>
+<li>EL0：非特权用户模式</li>
+<li>EL1：操作系统内核</li>
+<li>EL2：Hypervisor，虚拟扩展</li>
+<li>EL3：Secure Monitor，安全扩展。实现EL0和EL1的Secure和Non-Secure之间的切换，可起到物理屏障安全隔离作用。</li>
+</ul>
+<h4 id="2-3-模式与异常等级之间的关系"><a href="#2-3-模式与异常等级之间的关系" class="headerlink" title="2.3 模式与异常等级之间的关系"></a>2.3 模式与异常等级之间的关系</h4><ul>
+<li><p>user模式：只能在EL0执行</p>
+</li>
+<li><p>monitor模式：只能在Secure的EL3执行</p>
+</li>
+<li><p>hyp模式：只能在Non-Secure的EL2执行，虚拟机。</p>
+</li>
+<li><p>system，supervisor，abort，undefined，IRQ，FIQ模式：依赖于Secure模式</p>
+<p><img src="ExpetionLevel1.png" alt="状态寄存器示意图1"> </p>
+</li>
+</ul>
+<h1 id="0x02-指令"><a href="#0x02-指令" class="headerlink" title="0x02 指令"></a>0x02 指令</h1><p>&emsp;&emsp;我们首先工程里创建一个.h文件和一个.s文件</p>
+<p><img src="sample_create.png" alt="创建的文件示意图"> </p>
+<p>&emsp;&emsp;接着，在头文件声明一个test方法</p>
+<p><img src="header_declarm.png" alt="头文件示意图"> </p>
+<p>&emsp;&emsp;汇编文件里，声明一个global，表示_test那块指令是可以暴露出给外面调用的</p>
+<p><img src="assemble_declarm.png" alt="汇编文件示意图"> </p>
+<p>&emsp;&emsp;准备工作结束后，以后使用的时候就加入asm.h头文件就可以调用相关函数。接着，我们开始认识一些常用的指令</p>
+<h4 id="mov"><a href="#mov" class="headerlink" title="mov"></a>mov</h4><p>&emsp;&emsp;mov指令的格式为：mov{条件}{s} 目的寄存器，源操作数</p>
+<p>&emsp;&emsp;mov指令可完成从另一个寄存器、被移位的寄存器或将一个立即数加载到目的寄存器。其中s选项决定指令的操作是否影响CPSR中条件标志位的值，当没有s时指令不更新CPSR中条件标志位的值。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">8</span></span><br><span class="line"><span class="keyword">mov </span>w2, w1</span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/d w1</span><br><span class="line">      w1 = <span class="number">8</span></span><br><span class="line">(lldb) register read/d w2</span><br><span class="line">      w2 = <span class="number">8</span></span><br></pre></td></tr></table></figure>
+<h4 id="mvn"><a href="#mvn" class="headerlink" title="mvn"></a>mvn</h4><p>&emsp;&emsp;mvn指令的格式为：mvn{条件}{s} 目的寄存器，源操作数</p>
+<p>&emsp;&emsp;mvn指令可完成从另一个寄存器被移位的寄存器或将一个立即数加载到目的寄存器。与mov指令不同之处是在传送之前按位被取反了，即把一个被取反的值传送到目的寄存器中。 其中s选项决定指令的操作是否影响CPSR中条件标志位的值，当没有s时指令不更新CPSR中条件标志位的值。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">0</span></span><br><span class="line"><span class="keyword">mvn </span>w2, w1</span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/d w2</span><br><span class="line">      w2 = -<span class="number">1</span></span><br></pre></td></tr></table></figure>
+<h4 id="add"><a href="#add" class="headerlink" title="add"></a>add</h4><p>&emsp;&emsp;add指令的格式为：add{条件}{s} 目的寄存器，操作数1，操作数2</p>
+<p>&emsp;&emsp;add指令用于把两个操作数相加，并将结果存放到目的寄存器中。操作数1应是一个寄存器，操作数2可以是一个寄存器，被移位的寄存器，或一个立即数</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">2</span></span><br><span class="line"><span class="keyword">mov </span>w2, <span class="number">4</span></span><br><span class="line"><span class="keyword">add </span>w0, w1, w2</span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/d w0</span><br><span class="line">      w0 = <span class="number">6</span></span><br></pre></td></tr></table></figure>
+<h4 id="adc"><a href="#adc" class="headerlink" title="adc"></a>adc</h4><p>&emsp;&emsp;adc指令的格式为：adc{条件}{s} 目的寄存器，操作数1，操作数2</p>
+<p>&emsp;&emsp;adc指令用于把两个操作数相加，再加上CPSR中的C条件标志位的值，并将结果存放到目的寄存器中。它使用一个进位标志位，这样就可以做比64位大的数的加法，注意不要忘记设置s后缀来更改进位标志。操作数1应是一个寄存器，操作数2可以是一个寄存器，被移位的寄存器，或一个立即数。</p>
+<h4 id="sub"><a href="#sub" class="headerlink" title="sub"></a>sub</h4><p>&emsp;&emsp;sub指令的格式为：sub{条件}{s} 目的寄存器，操作数1，操作数2</p>
+<p>&emsp;&emsp;sub指令用于把操作数1减去操作数2，并将结果存放到目的寄存器。操作数1应是一个寄存器，操作数2可以是一个寄存器，被移位的寄存器，或一个立即数。该指令可用于有符号数或无符号数的减法运算。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">4</span></span><br><span class="line"><span class="keyword">mov </span>w2, <span class="number">2</span></span><br><span class="line"><span class="keyword">sub </span>w0, w1, w2</span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/d w0</span><br><span class="line">      w0 = <span class="number">2</span></span><br></pre></td></tr></table></figure>
+<h4 id="sbc"><a href="#sbc" class="headerlink" title="sbc"></a>sbc</h4><p>&emsp;&emsp;sbc指令的格式为：sbc{条件}{s} 目的寄存器，操作数1，操作数2</p>
+<p>&emsp;&emsp;sbc指令用于把操作数1减去操作数2，再减去CPSR中的C条件标志位的反码，并将结果存放到目的寄存器中。操作数1应是一个寄存器，操作数2可以是一个寄存器，被移位的寄存器，或一个立即数。该指令使用进位标志来表示借位，这样就可以做大于32位的减法，注意不要忘记设置s后缀来更改进位标志。该指令可用于有符号数或无符号数的减法运算。</p>
+<h4 id="mul"><a href="#mul" class="headerlink" title="mul"></a>mul</h4><p>&emsp;&emsp;mul指令的格式为：mul{条件}{s} 目的寄存器，操作数1，操作数2</p>
+<p>&emsp;&emsp;mul指令完成将操作数1与操作数2的乘法运算，并把结果放置到目的寄存器中，同时可以根据运算结果设置CPSR中相应的条件标志位。其中，操作数1和操作数2均为64位的有符号或无符号数。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">4</span></span><br><span class="line"><span class="keyword">mov </span>w2, <span class="number">2</span></span><br><span class="line"><span class="keyword">mul </span>w0, w1, w2</span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/d w0</span><br><span class="line">      w0 = <span class="number">8</span></span><br></pre></td></tr></table></figure>
+<h4 id="and"><a href="#and" class="headerlink" title="and"></a>and</h4><p>&emsp;&emsp;and指令的格式为：and{条件}{s} 目的寄存器，操作数1，操作数2</p>
+<p>&emsp;&emsp;and指令用于在两个操作数上进行逻辑与运算，并把结果放置到目的寄存器中。操作数1应是一个寄存器，操作数2可以是一个寄存器，被移位的寄存器，或一个立即数。该指令常用于屏蔽操作数1的某些位。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">4</span></span><br><span class="line"><span class="keyword">and </span>w0, w1, <span class="number">3</span> <span class="comment">; 保持w1的0,1位，其余位清零</span></span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/d w0</span><br><span class="line">      w0 = <span class="number">0</span></span><br></pre></td></tr></table></figure>
+<h4 id="orr"><a href="#orr" class="headerlink" title="orr"></a>orr</h4><p>&emsp;&emsp;orr指令的格式为：orr{条件}{s} 目的寄存器，操作数1，操作数2</p>
+<p>&emsp;&emsp;orr指令用于在两个操作数上进行逻辑或运算，并把结果放置到目的寄存器中。操作数1应是一个寄存器，操作数2可以是一个寄存器，被移位的寄存器，或一个立即数。该指令常用于设置操作1的某些位。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">4</span></span><br><span class="line"><span class="keyword">orr </span>w0, w1, <span class="number">3</span>  <span class="comment">; 设置w1的0,1位，其余位保持不变</span></span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/d w0</span><br><span class="line">      w0 = <span class="number">7</span></span><br></pre></td></tr></table></figure>
+<h4 id="eor"><a href="#eor" class="headerlink" title="eor"></a>eor</h4><p>&emsp;&emsp;eor指令的格式为：eor{条件}{s} 目的寄存器，操作数1，操作数2</p>
+<p>&emsp;&emsp;eor指令用于在两个操作数上进行逻辑异或运算，并把结果放置到目的寄存器中操作数1应是一个寄存器，操作数2可以是一个寄存器，被移位的寄存器，或一个立即数。该指令常用于反转操作数1的某些位。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">4</span></span><br><span class="line"><span class="keyword">eor </span>w0, w1, <span class="number">3</span> <span class="comment">; 反转w1的0,1位，其余位保持不变</span></span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/d w0</span><br><span class="line">      w0 = <span class="number">7</span></span><br></pre></td></tr></table></figure>
+<h4 id="tst"><a href="#tst" class="headerlink" title="tst"></a>tst</h4><p>&emsp;&emsp;tst指令的格式为：tst{条件} 操作数1，操作数2</p>
+<p>&emsp;&emsp;tst指令用于把一个寄存器的内容和另一个寄存器的内容或立即数进行按位与运算，并根据运算结果更新CPSR中条件标志位的值。操作数1是要测试的数据，而操作数2是一个位掩码，该指令一般用来检测是否设置了特定的位。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">0</span></span><br><span class="line"><span class="keyword">tst </span>w1, <span class="number">1</span></span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/t <span class="keyword">cpsr</span></span><br><span class="line"><span class="keyword"> </span>   <span class="keyword">cpsr </span>= <span class="number">0b01100000000000000000000000000000</span> <span class="comment">;执行tst命令之前</span></span><br><span class="line">(lldb) register read/t <span class="keyword">cpsr</span></span><br><span class="line"><span class="keyword"> </span>   <span class="keyword">cpsr </span>= <span class="number">0b01000000000000000000000000000000</span> <span class="comment">;执行tst命令之后</span></span><br></pre></td></tr></table></figure>
+<h4 id="str"><a href="#str" class="headerlink" title="str"></a>str</h4><p>&emsp;&emsp;str指令的格式为：tst{条件}  源寄存器，&lt;存储器地址&gt;</p>
+<p>&emsp;&emsp;str指令用于从源寄存器中将一个64位或32位(看使用rn还是wn)的字节数据传送到存储器中。</p>
+<p>&emsp;&emsp;str的示例与ldr一起说明。</p>
+<h4 id="ldr"><a href="#ldr" class="headerlink" title="ldr"></a>ldr</h4><p>&emsp;&emsp;ldr指令的格式为：ldr{条件}  目的寄存器，&lt;存储器地址&gt;</p>
+<p>&emsp;&emsp;ldr指令用于从存储器中将一个64位或32位(看使用rn还是wn)的字节数据传送到目的寄存器中。当程序计数器pc作为目的寄存器时，指令从存储器中读取的字节数据被当做目的地址，从而可以实现程序流程的跳转。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">4</span></span><br><span class="line"><span class="keyword">str </span>w1, [<span class="built_in">sp</span>, <span class="number">8</span>]</span><br><span class="line"><span class="keyword">ldr </span>w0, [<span class="built_in">sp</span>, <span class="number">8</span>]</span><br><span class="line"><span class="symbol">ret</span></span><br><span class="line"></span><br><span class="line">// 调试结果</span><br><span class="line">(lldb) register read/d w0</span><br><span class="line">      w0 = <span class="number">4</span></span><br></pre></td></tr></table></figure>
+<h3 id="b"><a href="#b" class="headerlink" title="b"></a>b</h3><p>&emsp;&emsp;b指令的格式为：b{条件} 目标地址</p>
+<p>&emsp;&emsp;b指令是最简单的跳转指令。一个遇到一个b指令，ARM处理器将立即跳转到给定的目标地址，从那里继续执行。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">.text</span></span><br><span class="line"><span class="symbol">.global</span> _test</span><br><span class="line"></span><br><span class="line"><span class="symbol">_test</span>:</span><br><span class="line"><span class="keyword">b </span>label</span><br><span class="line"><span class="keyword">mov </span>w2, <span class="number">5</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">label</span>:</span><br><span class="line"><span class="keyword">mov </span>w0, <span class="number">3</span></span><br><span class="line"><span class="keyword">mov </span>w1, <span class="number">4</span></span><br><span class="line"><span class="symbol">ret</span></span><br></pre></td></tr></table></figure>
+<h4 id="bl"><a href="#bl" class="headerlink" title="bl"></a>bl</h4><p>&emsp;&emsp;b指令的格式为：bl{条件} 目标地址</p>
+<p>&emsp;&emsp;同样是跳转指令，但是在跳转之前，会在lr寄存器中保存pc的当前内容，因此，可以通过将lr的内容重新加载到pc中，来返回到跳转指令之后的那个指令处执行。</p>
+<h1 id="0x03-栈"><a href="#0x03-栈" class="headerlink" title="0x03 栈"></a>0x03 栈</h1><h4 id="一个简单汇编代码"><a href="#一个简单汇编代码" class="headerlink" title="一个简单汇编代码"></a>一个简单汇编代码</h4><p>&emsp;&emsp;首先，我们看下最简单的汇编是什么样的，我们定义两个局部变量：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">int</span> b = <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;我们Xcode的Debug -&gt; Debug Workflow -&gt; Always Show Disassembly，打开始终显示汇编，这样断点的时候就直接以汇编代码呈现了：</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">main</span>:</span><br><span class="line">    <span class="number">0x102eba73c</span> &lt;+<span class="number">0</span>&gt;:  <span class="keyword">sub </span>   <span class="built_in">sp</span>, <span class="built_in">sp</span>, <span class="number">#0x20</span>             <span class="comment">; =0x20 </span></span><br><span class="line">    <span class="number">0x102eba740</span> &lt;+<span class="number">4</span>&gt;:  <span class="keyword">orr </span>   w8, wzr, <span class="number">#0x3</span></span><br><span class="line">    <span class="number">0x102eba744</span> &lt;+<span class="number">8</span>&gt;:  <span class="keyword">orr </span>   w9, wzr, <span class="number">#0x2</span></span><br><span class="line">    <span class="number">0x102eba748</span> &lt;+<span class="number">12</span>&gt;: <span class="keyword">str </span>   wzr, [<span class="built_in">sp</span>, <span class="number">#0x1c</span>]</span><br><span class="line">    <span class="number">0x102eba74c</span> &lt;+<span class="number">16</span>&gt;: <span class="keyword">str </span>   w0, [<span class="built_in">sp</span>, <span class="number">#0x18</span>]</span><br><span class="line">    <span class="number">0x102eba750</span> &lt;+<span class="number">20</span>&gt;: <span class="keyword">str </span>   x1, [<span class="built_in">sp</span>, <span class="number">#0x10</span>]</span><br><span class="line">    <span class="number">0x102eba754</span> &lt;+<span class="number">24</span>&gt;: <span class="keyword">str </span>   w9, [<span class="built_in">sp</span>, <span class="number">#0xc</span>]</span><br><span class="line">    <span class="number">0x102eba758</span> &lt;+<span class="number">28</span>&gt;: <span class="keyword">str </span>   w8, [<span class="built_in">sp</span>, <span class="number">#0x8</span>]</span><br><span class="line">-&gt;  <span class="number">0x102eba75c</span> &lt;+<span class="number">32</span>&gt;: <span class="keyword">ldr </span>   w8, [<span class="built_in">sp</span>, <span class="number">#0xc</span>]</span><br><span class="line">    <span class="number">0x102eba760</span> &lt;+<span class="number">36</span>&gt;: <span class="keyword">ldr </span>   w9, [<span class="built_in">sp</span>, <span class="number">#0x8</span>]</span><br><span class="line">    <span class="number">0x102eba764</span> &lt;+<span class="number">40</span>&gt;: <span class="keyword">add </span>   w0, w8, w9</span><br><span class="line">    <span class="number">0x102eba768</span> &lt;+<span class="number">44</span>&gt;: <span class="keyword">add </span>   <span class="built_in">sp</span>, <span class="built_in">sp</span>, <span class="number">#0x20</span>             <span class="comment">; =0x20 </span></span><br><span class="line">    <span class="number">0x102eba76c</span> &lt;+<span class="number">48</span>&gt;: ret</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;当然我们也可以直接用命令进行转换：</p>
+<blockquote>
+<p>xcrun -sdk iphoneos clang -S -arch arm64 main.m </p>
+</blockquote>
+<p>&emsp;&emsp;我们需要知道iOS是小端模式，所以汇编中的栈是由高地址向低地址传递数据，栈底是高地址，栈顶是低地址。在编译器生成汇编时，首先会计算需要的栈空间大小，并利用sp指针向低地址开辟相应的空间，在上面的汇编代码中，需要开辟0x20(即32)字节的栈空间。即，刚开始的栈如下图：</p>
+<p><img src="stack_01.png" alt="初始化的栈示意图"> </p>
+<p>&emsp;&emsp;这个例子中，我们会一行一行阅读汇编指令</p>
+<ol>
+<li>sub sp, sp, #0x20   ; sp指针往低地址移动32字节，sp指针指向了新地址</li>
+</ol>
+<p><img src="stack_02.png" alt="移动32字节的栈示意图"> </p>
+<ol>
+<li>orr w8, wzr, #0x3  ; 3与零寄存器取或，得到的值存到w8寄存器，这里就是把3放到w8寄存器</li>
+<li>orr w9, wzr, #0x2  ; 2与零寄存器取或，得到的值存到w9寄存器，这里就是把2放到w9寄存器</li>
+<li>str wzr, [sp, #0x1c]  ; 从sp地址+28个字节为基地址开始的4个字节内的数据用零寄存器内的数据填充</li>
+<li>str w0, [sp, #0x18]  ; 从sp地址+24个字节为基地址开始的4个字节内的数据用w0寄存器内的数据填充</li>
+<li>str x1, [sp, #0x10]  ; 从sp地址+16个字节为基地址开始的8个字节内的数据用x1寄存器内的数据填充</li>
+<li>str w9, [sp, #0xc]   ; 从sp地址+12个字节为基地址开始的4个字节内的数据用w9寄存器内的值(即2)填充</li>
+<li>str w8, [sp, #0x8]  ; 从sp地址+8个字节为基地址开始的4个字节内的数据用w8寄存器内的值(即3)填充</li>
+<li>ldr w8, [sp, #0xc]  ; 把从sp地址+12个字节为基地址开始的4个字节的数据放到w8寄存器</li>
+<li>ldr w9, [sp, #0x8]  ; 把从sp地址+8个字节为基地址开始的4个字节的数据放到w9寄存器</li>
+<li>add w0, w8, w9  ; 把w8和w9寄存器内的值相加，保存到w0寄存器，即返回操作，return的值保存在w0寄存器。</li>
+<li>add sp, sp, #0x20  ; sp指针往高地址移动32个字节，即回到最初的位置</li>
+</ol>
+<p><img src="stack_03.png" alt="数据入栈的栈示意图"> </p>
+<p>&emsp;&emsp;这里还需要注意的是，我们的函数返回结果是保存在寄存器w0(如果是64位则是x0)中的，但也不是也只有这一个寄存器可以用作保存返回结果，w0~w7一共8个寄存器都是可以使用的。而且为什么需要开启32字节的栈空间，明明我们用不到那么多，那是因为ARM规定sp必须16字节对齐。</p>
+<h4 id="堆栈平衡"><a href="#堆栈平衡" class="headerlink" title="堆栈平衡"></a>堆栈平衡</h4><p>&emsp;&emsp;前面的示例代码中，或许你对于代码开始时的sub sp, sp, #0x20和结束时的add sp, sp, #0x20感到好奇，其实这样做就是维持栈平衡，特别最后的add sp, sp, #0x20表示的就退栈，前面开辟了多少空间，函数调用结束的时候就需要恢复成函数调用前的样子。如果每次只有开辟空间，没有退栈操作，那么很快我们的栈将会被使用完毕。</p>
+<p>&emsp;&emsp;这也就解释了，函数内的为什么变量都存在栈区，并且为什么函数调用结束后，函数内的变量就会被释放掉。</p>
+<h4 id="函数的参数传递和调用约定"><a href="#函数的参数传递和调用约定" class="headerlink" title="函数的参数传递和调用约定"></a>函数的参数传递和调用约定</h4><p>&emsp;&emsp;那么在汇编代码中，参数是如何进行传递的？我们通过下面这段示例来了解下：</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> add(<span class="keyword">int</span> a, <span class="keyword">int</span> b) &#123;</span><br><span class="line">    <span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">return</span> add(<span class="number">2</span>, <span class="number">3</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;将add函数转换成汇编代码：</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">add:</span></span><br><span class="line"><span class="keyword"> </span>   <span class="number">0x100c8e718</span> &lt;+<span class="number">0</span>&gt;:  <span class="keyword">sub </span>   <span class="built_in">sp</span>, <span class="built_in">sp</span>, <span class="number">#0x10</span>             <span class="comment">; =0x10 </span></span><br><span class="line">    <span class="number">0x100c8e71c</span> &lt;+<span class="number">4</span>&gt;:  <span class="keyword">str </span>   w0, [<span class="built_in">sp</span>, <span class="number">#0xc</span>]</span><br><span class="line">    <span class="number">0x100c8e720</span> &lt;+<span class="number">8</span>&gt;:  <span class="keyword">str </span>   w1, [<span class="built_in">sp</span>, <span class="number">#0x8</span>]</span><br><span class="line">-&gt;  <span class="number">0x100c8e724</span> &lt;+<span class="number">12</span>&gt;: <span class="keyword">ldr </span>   w0, [<span class="built_in">sp</span>, <span class="number">#0xc</span>]</span><br><span class="line">    <span class="number">0x100c8e728</span> &lt;+<span class="number">16</span>&gt;: <span class="keyword">ldr </span>   w1, [<span class="built_in">sp</span>, <span class="number">#0x8</span>]</span><br><span class="line">    <span class="number">0x100c8e72c</span> &lt;+<span class="number">20</span>&gt;: <span class="keyword">add </span>   w0, w0, w1</span><br><span class="line">    <span class="number">0x100c8e730</span> &lt;+<span class="number">24</span>&gt;: <span class="keyword">add </span>   <span class="built_in">sp</span>, <span class="built_in">sp</span>, <span class="number">#0x10</span>             <span class="comment">; =0x10 </span></span><br><span class="line">    <span class="number">0x100c8e734</span> &lt;+<span class="number">28</span>&gt;: ret</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;我们在add函数内部打下断点，通过lldb的register指令读取下x0和x1寄存器的值：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(lldb) <span class="keyword">register</span> read/d w0</span><br><span class="line">      w0 = <span class="number">2</span></span><br><span class="line">(lldb) <span class="keyword">register</span> read/d w1</span><br><span class="line">      w1 = <span class="number">3</span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;可以发现，函数参数是通过寄存器进行传递的，那么是不是如果函数参数很多很多，所有寄存器都可以用来保存函数参数？我们把示例改下：</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> add(<span class="keyword">int</span> a, <span class="keyword">int</span> b, <span class="keyword">int</span> c, <span class="keyword">int</span> d, <span class="keyword">int</span> e, <span class="keyword">int</span> f, <span class="keyword">int</span> g, <span class="keyword">int</span> h, <span class="keyword">int</span> i, <span class="keyword">int</span> j, <span class="keyword">int</span> k, <span class="keyword">int</span> l, <span class="keyword">int</span> m) &#123;</span><br><span class="line">    <span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> add(<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// add函数对应汇编如下：</span></span><br><span class="line">add:</span><br><span class="line">    <span class="number">0x10496e694</span> &lt;+<span class="number">0</span>&gt;:  sub    sp, sp, <span class="meta">#0x40             ; =0x40 </span></span><br><span class="line">    <span class="number">0x10496e698</span> &lt;+<span class="number">4</span>&gt;:  ldr    w8, [sp, <span class="meta">#0x50]</span></span><br><span class="line">    <span class="number">0x10496e69c</span> &lt;+<span class="number">8</span>&gt;:  ldr    w9, [sp, <span class="meta">#0x4c]</span></span><br><span class="line">    <span class="number">0x10496e6a0</span> &lt;+<span class="number">12</span>&gt;: ldr    w10, [sp, <span class="meta">#0x48]</span></span><br><span class="line">    <span class="number">0x10496e6a4</span> &lt;+<span class="number">16</span>&gt;: ldr    w11, [sp, <span class="meta">#0x44]</span></span><br><span class="line">    <span class="number">0x10496e6a8</span> &lt;+<span class="number">20</span>&gt;: ldr    w12, [sp, <span class="meta">#0x40]</span></span><br><span class="line">    <span class="number">0x10496e6ac</span> &lt;+<span class="number">24</span>&gt;: str    w0, [sp, <span class="meta">#0x3c]</span></span><br><span class="line">    <span class="number">0x10496e6b0</span> &lt;+<span class="number">28</span>&gt;: str    w1, [sp, <span class="meta">#0x38]</span></span><br><span class="line">    <span class="number">0x10496e6b4</span> &lt;+<span class="number">32</span>&gt;: str    w2, [sp, <span class="meta">#0x34]</span></span><br><span class="line">    <span class="number">0x10496e6b8</span> &lt;+<span class="number">36</span>&gt;: str    w3, [sp, <span class="meta">#0x30]</span></span><br><span class="line">    <span class="number">0x10496e6bc</span> &lt;+<span class="number">40</span>&gt;: str    w4, [sp, <span class="meta">#0x2c]</span></span><br><span class="line">    <span class="number">0x10496e6c0</span> &lt;+<span class="number">44</span>&gt;: str    w5, [sp, <span class="meta">#0x28]</span></span><br><span class="line">    <span class="number">0x10496e6c4</span> &lt;+<span class="number">48</span>&gt;: str    w6, [sp, <span class="meta">#0x24]</span></span><br><span class="line">    <span class="number">0x10496e6c8</span> &lt;+<span class="number">52</span>&gt;: str    w7, [sp, <span class="meta">#0x20]</span></span><br><span class="line">-&gt;  <span class="number">0x10496e6cc</span> &lt;+<span class="number">56</span>&gt;: ldr    w0, [sp, <span class="meta">#0x3c]</span></span><br><span class="line">    <span class="number">0x10496e6d0</span> &lt;+<span class="number">60</span>&gt;: ldr    w1, [sp, <span class="meta">#0x38]</span></span><br><span class="line">    <span class="number">0x10496e6d4</span> &lt;+<span class="number">64</span>&gt;: add    w0, w0, w1</span><br><span class="line">    <span class="number">0x10496e6d8</span> &lt;+<span class="number">68</span>&gt;: str    w12, [sp, <span class="meta">#0x1c]</span></span><br><span class="line">    <span class="number">0x10496e6dc</span> &lt;+<span class="number">72</span>&gt;: str    w9, [sp, <span class="meta">#0x18]</span></span><br><span class="line">    <span class="number">0x10496e6e0</span> &lt;+<span class="number">76</span>&gt;: str    w10, [sp, <span class="meta">#0x14]</span></span><br><span class="line">    <span class="number">0x10496e6e4</span> &lt;+<span class="number">80</span>&gt;: str    w11, [sp, <span class="meta">#0x10]</span></span><br><span class="line">    <span class="number">0x10496e6e8</span> &lt;+<span class="number">84</span>&gt;: str    w8, [sp, <span class="meta">#0xc]</span></span><br><span class="line">    <span class="number">0x10496e6ec</span> &lt;+<span class="number">88</span>&gt;: add    sp, sp, <span class="meta">#0x40             ; =0x40 </span></span><br><span class="line">    <span class="number">0x10496e6f0</span> &lt;+<span class="number">92</span>&gt;: ret</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;事实上，能用作保存函数参数的寄存器只有8个分别是w0~w7，其他都是保存到栈上了，加上前面已经提到过的函数返回结果保存在w0(当然你也可以写在w0~w7任意一个)。这种调用约定也称为ATPCS。</p>
+<h4 id="函数跳转"><a href="#函数跳转" class="headerlink" title="函数跳转"></a>函数跳转</h4><p>&emsp;&emsp;回到之前的例子：</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> add(<span class="keyword">int</span> a, <span class="keyword">int</span> b) &#123;</span><br><span class="line">    <span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> main(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">return</span> add(<span class="number">2</span>, <span class="number">3</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">main:</span><br><span class="line">	<span class="comment">// 开辟32字节空间</span></span><br><span class="line">    <span class="number">0x10280e738</span> &lt;+<span class="number">0</span>&gt;:  sub    sp, sp, <span class="meta">#0x20    </span></span><br><span class="line">    <span class="comment">// 保存现场：x29表示fp寄存器，x30表示lr寄存器。从sp地址往高地址偏移16个字节的地址开始，用16个字节保存fp和lr寄存器。前8个字节保存fp寄存器，后8个字节保存lr寄存器。</span></span><br><span class="line">    <span class="number">0x10280e73c</span> &lt;+<span class="number">4</span>&gt;:  stp    x29, x30, [sp, <span class="meta">#0x10]		 </span></span><br><span class="line">    <span class="comment">// fp寄存器移动到从sp地址往高地址偏移16个字节的地址</span></span><br><span class="line">    <span class="number">0x10280e740</span> &lt;+<span class="number">8</span>&gt;:  add    x29, sp, <span class="meta">#0x10            ; =0x10 </span></span><br><span class="line">    <span class="number">0x10280e744</span> &lt;+<span class="number">12</span>&gt;: orr    w8, wzr, <span class="meta">#0x2</span></span><br><span class="line">    <span class="number">0x10280e748</span> &lt;+<span class="number">16</span>&gt;: orr    w9, wzr, <span class="meta">#0x3</span></span><br><span class="line">    <span class="number">0x10280e74c</span> &lt;+<span class="number">20</span>&gt;: stur   wzr, [x29, <span class="meta">#-0x4]</span></span><br><span class="line">    <span class="number">0x10280e750</span> &lt;+<span class="number">24</span>&gt;: str    w0, [sp, <span class="meta">#0x8]</span></span><br><span class="line">    <span class="number">0x10280e754</span> &lt;+<span class="number">28</span>&gt;: str    x1, [sp]</span><br><span class="line">    <span class="comment">// x8和x9寄存器内的值保存到x0和x1寄存器上，之前说过函数参数是通过前八位寄存器传递的</span></span><br><span class="line">    <span class="number">0x10280e758</span> &lt;+<span class="number">32</span>&gt;: mov    x0, x8</span><br><span class="line">    <span class="number">0x10280e75c</span> &lt;+<span class="number">36</span>&gt;: mov    x1, x9</span><br><span class="line">    <span class="number">0x10280e760</span> &lt;+<span class="number">40</span>&gt;: bl     <span class="number">0x10280e718</span>               ; add at main.m:<span class="number">12</span></span><br><span class="line">    <span class="comment">// 恢复现场：从sp地址往高地址偏移16个字节的地址开始的16个字节里面的数据，前8个字节保存到fp寄存器，后8个字节保存到lr寄存器</span></span><br><span class="line">    <span class="number">0x10280e764</span> &lt;+<span class="number">44</span>&gt;: ldp    x29, x30, [sp, <span class="meta">#0x10]</span></span><br><span class="line">    <span class="comment">// 退栈</span></span><br><span class="line">    <span class="number">0x10280e768</span> &lt;+<span class="number">48</span>&gt;: add    sp, sp, <span class="meta">#0x20             ; =0x20 </span></span><br><span class="line">    <span class="number">0x10280e76c</span> &lt;+<span class="number">52</span>&gt;: ret  </span><br><span class="line">        </span><br><span class="line">add:</span><br><span class="line">    <span class="number">0x10280e718</span> &lt;+<span class="number">0</span>&gt;:  sub    sp, sp, <span class="meta">#0x10             ; =0x10 </span></span><br><span class="line">    <span class="number">0x10280e71c</span> &lt;+<span class="number">4</span>&gt;:  str    w0, [sp, <span class="meta">#0xc]</span></span><br><span class="line">    <span class="number">0x10280e720</span> &lt;+<span class="number">8</span>&gt;:  str    w1, [sp, <span class="meta">#0x8]</span></span><br><span class="line">-&gt;  <span class="number">0x10280e724</span> &lt;+<span class="number">12</span>&gt;: ldr    w0, [sp, <span class="meta">#0xc]</span></span><br><span class="line">    <span class="number">0x10280e728</span> &lt;+<span class="number">16</span>&gt;: ldr    w1, [sp, <span class="meta">#0x8]</span></span><br><span class="line">    <span class="number">0x10280e72c</span> &lt;+<span class="number">20</span>&gt;: add    w0, w0, w1</span><br><span class="line">    <span class="number">0x10280e730</span> &lt;+<span class="number">24</span>&gt;: add    sp, sp, <span class="meta">#0x10             ; =0x10 </span></span><br><span class="line">    <span class="number">0x10280e734</span> &lt;+<span class="number">28</span>&gt;: ret</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;上面的代码流程大致是下面这样的：</p>
+<p><img src="stack_04.png" alt="数据入栈的栈示意图"> </p>
+<p>&emsp;&emsp;代码中，一开始做了保存现场的操作。首先讲下为什么要保存fp寄存器里的值？因为fp寄存器可能正在被之前一个函数用着，如果不保存，对调用本函数的函数其栈区就乱了，因为我们要知道的是sp与fp之间的空间就是函数的栈空间，所以必须保存已保证栈的正确性。</p>
+<p>&emsp;&emsp;其次，为什么需要保存lr寄存器里的值，我们知道lr保存着函数返回地址，有了它，函数才能知道我结束后该跳转到哪里，假设我们不保存会有什么后面，但我们执行bl     0x10280e718这条指令的时候，bl指令会将bl下一条指令的地址保存进lr寄存器里，所以在这个例子里，bl执行完毕后会来到0x10280e764这个位置继续往后执行，如果后面没做恢复操作，在执行到ret指令后，会又来到0x10280e764这个位置一直死循环。所以只有之前保存过lr寄存器值，然后再后面又恢复数据给lr寄存器，ret指令才能正确跳转。</p>
+<p>&emsp;&emsp;需要提一个概念，叶子函数和非叶子函数</p>
+<ul>
+<li>叶子函数：函数内部不再调用其他函数的函数</li>
+<li>非叶子函数：函数内部还在调用其他函数的函数</li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/13/深入分析block/" rel="next" title="深入分析block">
+                <i class="fa fa-chevron-left"></i> 深入分析block
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/05/21/深入分析Runtime/" rel="prev" title="深入分析Runtime">
+                深入分析Runtime <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">朝暮</p>
+              <p class="site-description motion-element" itemprop="description">联系方式：leylfl@foxmail.com</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-精简指令集RISC（Reduced-Instruction-Set-Computer）"><span class="nav-number">1.</span> <span class="nav-text">0x01 精简指令集RISC（Reduced Instruction Set Computer）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-寄存器"><span class="nav-number">2.</span> <span class="nav-text">0x02 寄存器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-简介"><span class="nav-number">2.0.1.</span> <span class="nav-text">1. 简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-模式与异常等级"><span class="nav-number">2.0.2.</span> <span class="nav-text">2. 模式与异常等级</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-模式"><span class="nav-number">2.0.2.1.</span> <span class="nav-text">2.1 模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-异常等级"><span class="nav-number">2.0.2.2.</span> <span class="nav-text">2.2 异常等级</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-模式与异常等级之间的关系"><span class="nav-number">2.0.2.3.</span> <span class="nav-text">2.3 模式与异常等级之间的关系</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-指令"><span class="nav-number">3.</span> <span class="nav-text">0x02 指令</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#mov"><span class="nav-number">3.0.0.1.</span> <span class="nav-text">mov</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mvn"><span class="nav-number">3.0.0.2.</span> <span class="nav-text">mvn</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#add"><span class="nav-number">3.0.0.3.</span> <span class="nav-text">add</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#adc"><span class="nav-number">3.0.0.4.</span> <span class="nav-text">adc</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sub"><span class="nav-number">3.0.0.5.</span> <span class="nav-text">sub</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sbc"><span class="nav-number">3.0.0.6.</span> <span class="nav-text">sbc</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mul"><span class="nav-number">3.0.0.7.</span> <span class="nav-text">mul</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#and"><span class="nav-number">3.0.0.8.</span> <span class="nav-text">and</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#orr"><span class="nav-number">3.0.0.9.</span> <span class="nav-text">orr</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#eor"><span class="nav-number">3.0.0.10.</span> <span class="nav-text">eor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#tst"><span class="nav-number">3.0.0.11.</span> <span class="nav-text">tst</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#str"><span class="nav-number">3.0.0.12.</span> <span class="nav-text">str</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ldr"><span class="nav-number">3.0.0.13.</span> <span class="nav-text">ldr</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#b"><span class="nav-number">3.0.1.</span> <span class="nav-text">b</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#bl"><span class="nav-number">3.0.1.1.</span> <span class="nav-text">bl</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-栈"><span class="nav-number">4.</span> <span class="nav-text">0x03 栈</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#一个简单汇编代码"><span class="nav-number">4.0.0.1.</span> <span class="nav-text">一个简单汇编代码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#堆栈平衡"><span class="nav-number">4.0.0.2.</span> <span class="nav-text">堆栈平衡</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#函数的参数传递和调用约定"><span class="nav-number">4.0.0.3.</span> <span class="nav-text">函数的参数传递和调用约定</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#函数跳转"><span class="nav-number">4.0.0.4.</span> <span class="nav-text">函数跳转</span></a></li></ol></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">朝暮</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

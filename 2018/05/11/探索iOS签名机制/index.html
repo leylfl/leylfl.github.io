@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="0x01 前言&amp;emsp;&amp;emsp; 我们知道，数据如果是明文传递很容易被“窃听者”窃听，所以为了应对这种问题，我们通常会对数据进行加密。  &amp;emsp;&amp;emsp;加密对数据的安全作用完全不可或缺。接下来我们将从简至繁，了解加密的过程。 0x02 对称加密&amp;emsp;&amp;emsp;在对称加密中，加密者和解密者都是使用同一个密钥。  &amp;emsp;&amp;emsp;常见的对称加密有如下几种：  DES">
+<meta property="og:type" content="article">
+<meta property="og:title" content="探索iOS签名机制">
+<meta property="og:url" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/index.html">
+<meta property="og:site_name" content="朝暮的闲暇时刻">
+<meta property="og:description" content="0x01 前言&amp;emsp;&amp;emsp; 我们知道，数据如果是明文传递很容易被“窃听者”窃听，所以为了应对这种问题，我们通常会对数据进行加密。  &amp;emsp;&amp;emsp;加密对数据的安全作用完全不可或缺。接下来我们将从简至繁，了解加密的过程。 0x02 对称加密&amp;emsp;&amp;emsp;在对称加密中，加密者和解密者都是使用同一个密钥。  &amp;emsp;&amp;emsp;常见的对称加密有如下几种：  DES">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/encrypt_simple.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/symmetry_encrypt.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/asymmetric_encrypt01.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/asymmetric_encrypt02.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/hybrid_cryptosystem.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/hash_function.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/hybrid_hashFunction_cryptosystem.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/middle_attack.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/CA_Temple.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/mac_certSigningRequest.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/apple_assign01.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/apple_assign02.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/apple_assign03.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/apple_assign04.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/apple_assign05.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/apple_assign06.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/apple_assign07.png">
+<meta property="og:updated_time" content="2018-05-14T00:48:48.157Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="探索iOS签名机制">
+<meta name="twitter:description" content="0x01 前言&amp;emsp;&amp;emsp; 我们知道，数据如果是明文传递很容易被“窃听者”窃听，所以为了应对这种问题，我们通常会对数据进行加密。  &amp;emsp;&amp;emsp;加密对数据的安全作用完全不可或缺。接下来我们将从简至繁，了解加密的过程。 0x02 对称加密&amp;emsp;&amp;emsp;在对称加密中，加密者和解密者都是使用同一个密钥。  &amp;emsp;&amp;emsp;常见的对称加密有如下几种：  DES">
+<meta name="twitter:image" content="https://leylfl.github.io/2018/05/11/探索iOS签名机制/encrypt_simple.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://leylfl.github.io/2018/05/11/探索iOS签名机制/"/>
+
+
+
+
+
+  <title>探索iOS签名机制 | 朝暮的闲暇时刻</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">朝暮的闲暇时刻</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://leylfl.github.io/2018/05/11/探索iOS签名机制/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="朝暮">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="朝暮的闲暇时刻">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">探索iOS签名机制</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-11T16:27:56+08:00">
+                2018-05-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h1><p>&emsp;&emsp; 我们知道，数据如果是明文传递很容易被“窃听者”窃听，所以为了应对这种问题，我们通常会对数据进行加密。</p>
+<p><img src="encrypt_simple.png" alt="简单加密过程示意图"></p>
+<p>&emsp;&emsp;加密对数据的安全作用完全不可或缺。接下来我们将从简至繁，了解加密的过程。</p>
+<h1 id="0x02-对称加密"><a href="#0x02-对称加密" class="headerlink" title="0x02 对称加密"></a>0x02 对称加密</h1><p>&emsp;&emsp;在对称加密中，加密者和解密者都是使用同一个密钥。</p>
+<p><img src="symmetry_encrypt.png" alt="对称加密过程示意图"></p>
+<p>&emsp;&emsp;常见的对称加密有如下几种：</p>
+<ul>
+<li><p>DES</p>
+<blockquote>
+<p>&emsp;&emsp;DES是一种将64位明文加密成64位密文的对称密码算法，密钥长度是56位。规格上来说，密钥长度是64位，但每隔7位会设置一个用于错误检查的位，因此密钥实际长度为56位。</p>
+<p>&emsp;&emsp;由于每次只能加密64位数据，所以遇到比较大的数据，需要对DES加密进行反复。比如说要加密128位数据，首先先加密前64位，再对后64位进行加密。如果是更大的数据，以此类推。</p>
+<p>&emsp;&emsp;由于目前已经可以短时间内被破解，所以不建议使用。</p>
+</blockquote>
+</li>
+<li><p>3DES</p>
+<blockquote>
+<p>&emsp;&emsp;DES-EDE3，将DES重复3次所得到的一种密码算法，3次所使用的密钥都是不同的，也叫三重DES算法。缺点是处理速度不高，安全性也不足够高。</p>
+</blockquote>
+</li>
+<li><p>AES</p>
+<blockquote>
+<p>&emsp;&emsp;取代DES成为新标准的一种对称密码算法。AES的密码长度有128、192、256位三种，在2000年时，Rijindael算法作为AES的实现。目前，AES已经逐步取代DES、3DES成为首选的对称密码算法。加密后文件大小翻倍，同样的，解密的时间要慢于加密的时间。</p>
+</blockquote>
+</li>
+</ul>
+<p>&emsp;&emsp;但是，在使用对称加密的时候会遇到密钥配送问题。我们说过对称加密使用的是同一个密钥进行加解密，那么加密者肯定需要将密钥发送给接收者，而这发送密钥的过程中，窃听者是可以窃取这个密钥的，这就是密钥配送问题。</p>
+<p>&emsp;&emsp;解决密钥配送问题，一般有以下几种方案：</p>
+<ul>
+<li><p>事先约定好密钥</p>
+</li>
+<li><p>密钥分配中心</p>
+</li>
+<li><p>Diffie-Hellman密钥交换，这是一种密钥交换方法</p>
+</li>
+<li><p><strong>非对称加密</strong></p>
+</li>
+</ul>
+<h1 id="0x03-非对称加密"><a href="#0x03-非对称加密" class="headerlink" title="0x03 非对称加密"></a>0x03 非对称加密</h1><p>&emsp;&emsp;非对称加密中，密钥分为加密密钥和解密密钥两种不同的密钥。非对称加密，也称公钥密码。</p>
+<p>&emsp;&emsp;一般加密密钥是公开的，因此该密钥也称公钥；由消息接收者自己保管的解密密钥不能公开，一次该密钥也称私钥。</p>
+<p>&emsp;&emsp;公钥和私钥是一一对应的，是不能单独生成的，一对公钥和密钥称为密钥对。由公钥加密的密文，必须使用与该公钥所对应的私钥才能解密；由私钥加密的密文，必须使用与该私钥所对应的公钥才能解密。</p>
+<p><img src="asymmetric_encrypt01.png" alt="非对称加密过程示意图1"></p>
+<p>&emsp;&emsp;为什么说非对称加密很好的解决了对称加密的密钥配送问题？这是因为由消息的接收者生成一对公钥和私钥，然后将公钥发给消息的发送者，最后消息的发送者进行加密，这样消息的接收者就可以用私钥进行解密，得到明文信息，如下图所示。</p>
+<p><img src="asymmetric_encrypt02.png" alt="非对称加密过程示意图2"></p>
+<p>&emsp;&emsp;目前使用自多的非对称加密是RSA。RSA原理可以参考<a href="http://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html" target="_blank" rel="noopener">原理1</a>、<a href="http://www.ruanyifeng.com/blog/2013/07/rsa_algorithm_part_two.html" target="_blank" rel="noopener">原理2</a>。</p>
+<p>&emsp;&emsp;当然，非对称加密也不是完美的，对于数据比较大的来说，其效率会比较低，其解密所需时间大大慢于加密时间，那有没有又安全而且效率又高的方法呢？</p>
+<h1 id="0x04-混合密码"><a href="#0x04-混合密码" class="headerlink" title="0x04 混合密码"></a>0x04 混合密码</h1><p>&emsp;&emsp;通过对称加密和非对称加密的结合，我们可以解决对称加密的密钥配送问题和非对称加密的解密效率慢的问题。https运用的其实就是这个混合加密技术。</p>
+<p>&emsp;&emsp;加密的过程如下：</p>
+<ul>
+<li>消息接收者生成一对公钥和私钥</li>
+<li>消息接收者将公钥发送给消息发送者</li>
+<li>消息发送者随机生成一个对称加密的密钥</li>
+<li>消息发送者用密钥加密消息</li>
+<li>消息发送者用公钥对密钥进行加密</li>
+<li>消息发送者将加密消息和加密了的密钥发送给消息接收者</li>
+<li>消息接收者用私钥解密加密了的密钥</li>
+<li>消息接收者用密钥解密消息</li>
+</ul>
+<p><img src="hybrid_cryptosystem.png" alt="混合密码示意图"></p>
+<h1 id="0x05-单向散列函数"><a href="#0x05-单向散列函数" class="headerlink" title="0x05 单向散列函数"></a>0x05 单向散列函数</h1><p>&emsp;&emsp;单向散列函数，可以根据消息内容计算出散列值，散列值的长度和消息的长度无关，无论消息是1bit、1M、1G，计算出的散列值都是固定长度的。</p>
+<p>&emsp;&emsp;也被称为消息摘要函数或哈希函数。输出的散列值，也被称为消息摘要或指纹。</p>
+<p><img src="hash_function.png" alt="单向散列函数示意图"></p>
+<p>&emsp;&emsp;单向散列函数具有以下特点：</p>
+<ul>
+<li>根据任意长度的消息，计算出固定长度的散列值</li>
+<li>计算速度快</li>
+<li>数据哪怕只有一点点不同，计算出的散列值也都不一样</li>
+<li>具备单向性</li>
+</ul>
+<p>&emsp;&emsp;常见的单向散列函数：</p>
+<ul>
+<li><p>MD4、MD5</p>
+<blockquote>
+<p>产生128bit的散列值，目前已经不安全</p>
+</blockquote>
+</li>
+<li><p>SHA-1</p>
+<blockquote>
+<p>产生160bit的散列值，目前已经不安全</p>
+</blockquote>
+</li>
+<li><p>SHA-2</p>
+<blockquote>
+<p>SHA-256、SHA-384、SHA-512，散列值长度分别是256bit、384bit、512bit</p>
+</blockquote>
+</li>
+<li><p>SHA-3</p>
+<blockquote>
+<p>最新标准</p>
+</blockquote>
+</li>
+</ul>
+<p>&emsp;&emsp;采用单向散列函数，是为了防止数据被篡改。比如我们下载软件的时候，厂家都会提供一个MD5值，我们下载软件后，计算出MD5值，来比对两个值是否一样来判断下载的软件有没有被改过。同样的应用场景还有app的登录口令加密，我们的用户密码不会明文进行传递的。</p>
+<h1 id="0x06-数字签名"><a href="#0x06-数字签名" class="headerlink" title="0x06 数字签名"></a>0x06 数字签名</h1><p>&emsp;&emsp;前面我们已经可以通过单向散列函数来判断消息是否被篡改过，但还是一种情况？如何证明消息是对方本人发的，因为在前面非对称加密中我们提到消息接收者者将公钥发送出去，这样就导致任何发送者都可以拿来加密，对方可以被伪装、篡改或对方否认是自己发的等。</p>
+<p>&emsp;&emsp;要证明消息是消息发送者发的，其实很简单，我们把过程反过来，用消息发送者的私钥进行加密，因为私钥是消息发送者本人持有的，再加上单向散列函数的过程就是数字签名过程，具体流程如下图：</p>
+<p><img src="hybrid_hashFunction_cryptosystem.png" alt="数字签名示意图"></p>
+<p>&emsp;&emsp;所以，整个数字签名流程里我们可以了解到：</p>
+<ul>
+<li><p>确保了消息的完整性</p>
+</li>
+<li><p>知道消息是否被篡改了</p>
+</li>
+<li><p>防止别人否认</p>
+<p>&emsp;&emsp;但是，我们知道数字签名的流程前提是公钥是得属于真正的发送者，但是如果遇到中间人攻击，数字签名将会失效，那么什么是中间人攻击呢？</p>
+<p><img src="middle_attack.png" alt="中间人攻击示意图"></p>
+<p>&emsp;&emsp;这样公钥是不是发送者本人的不能保证了，那么这个又该如何解决？</p>
+</li>
+</ul>
+<h1 id="0x07-证书"><a href="#0x07-证书" class="headerlink" title="0x07 证书"></a>0x07 证书</h1><p>&emsp;&emsp;为了解决中间人攻击这样的问题，我们需要一个权威组织或受信任的个人给自己的公钥加上数字签名，来确保公钥不会被替换。我们前面说过数字签名可以确保数据完整性，加上是受信任的组织给签上的数字签名，所以只要拿着受信任组织的公钥去解密这个数字签名，验证完整性就能确保拿到的对方的公钥是没被替换过的。</p>
+<p>&emsp;&emsp;密码学中的证书叫做公钥证书，里面包含姓名、邮箱、本人公钥等个人信息。然后由认证机构施加数字签名。</p>
+<p>&emsp;&emsp;CA就是这样能够证明“公钥是本人”的权威组织或个人。其作用如下：</p>
+<p><img src="CA_Temple.png" alt="CA组织作用示意图"></p>
+<h1 id="0x08-iOS签名"><a href="#0x08-iOS签名" class="headerlink" title="0x08 iOS签名"></a>0x08 iOS签名</h1><p>&emsp;&emsp;iOS签名的作用就是保证安装到用户手机上的app都是经过官方允许的。那么，我们的签名是如何被加上的呢？这就需要结合上面我们看到的知识。</p>
+<p>&emsp;&emsp;首先，我们要生成Mac上的公钥和私钥，请求完成后会得到一个CertificateSigningRequest.certSigningRequest这样的文件。</p>
+<p><img src="mac_certSigningRequest.png" alt="生成Mac上的公钥和私钥示意图"></p>
+<p>&emsp;&emsp;然后，我们需要获得由苹果的私钥来给前面生成的Mac上的公钥进行签名后的证书，通过这些会生成开发者或者发布的cer证书，这些证书文件名是cer结尾的。</p>
+<p><img src="apple_assign01.png" alt="生成Mac公钥证书示意图"></p>
+<p><img src="apple_assign02.png" alt="生成Mac公钥证书示意图"></p>
+<p><img src="apple_assign03.png" alt="生成Mac公钥证书示意图"></p>
+<p><img src="apple_assign04.png" alt="生成Mac公钥证书示意图"></p>
+<p>&emsp;&emsp;最后，需要生成mobileprovision描述文件，里面包含之前生成的的证书外，还包括设备信息、apple id、app权限等信息。</p>
+<p>&emsp;&emsp;生成的入口如下，具体生成步骤不详细表述。</p>
+<p><img src="apple_assign05.png" alt="生成mobileprovision证书示意图"></p>
+<p><img src="apple_assign06.png" alt="生成mobileprovision证书示意图"></p>
+<h2 id="签名流程"><a href="#签名流程" class="headerlink" title="签名流程"></a>签名流程</h2><p>&emsp;&emsp;所有的证书生成完毕后，具体的签名步骤是什么样的呢？iOS签名具体流程如下：</p>
+<p><img src="apple_assign07.png" alt="iOS签名示意图"></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/09/深入分析Category/" rel="next" title="深入分析Category">
+                <i class="fa fa-chevron-left"></i> 深入分析Category
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/05/13/深入分析block/" rel="prev" title="深入分析block">
+                深入分析block <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">朝暮</p>
+              <p class="site-description motion-element" itemprop="description">联系方式：leylfl@foxmail.com</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-前言"><span class="nav-number">1.</span> <span class="nav-text">0x01 前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-对称加密"><span class="nav-number">2.</span> <span class="nav-text">0x02 对称加密</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-非对称加密"><span class="nav-number">3.</span> <span class="nav-text">0x03 非对称加密</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x04-混合密码"><span class="nav-number">4.</span> <span class="nav-text">0x04 混合密码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-单向散列函数"><span class="nav-number">5.</span> <span class="nav-text">0x05 单向散列函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x06-数字签名"><span class="nav-number">6.</span> <span class="nav-text">0x06 数字签名</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x07-证书"><span class="nav-number">7.</span> <span class="nav-text">0x07 证书</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x08-iOS签名"><span class="nav-number">8.</span> <span class="nav-text">0x08 iOS签名</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#签名流程"><span class="nav-number">8.1.</span> <span class="nav-text">签名流程</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">朝暮</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

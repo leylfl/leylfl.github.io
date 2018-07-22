@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="&amp;emsp;&amp;emsp;一般写的程序都是像下面这样的，代码一行行执行，到return的时候代码都已经执行完毕，程序退出。 1234int main(int argc, char * argv[]) &amp;#123;    /* 代码段 */    return 0;&amp;#125; &amp;emsp;&amp;emsp;但实际的应用中，我们的软件不可能像这样线性的执行，执行完我们的软件就退出，所以就需要一种技术，让我们">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入分析Runloop">
+<meta property="og:url" content="https://leylfl.github.io/2018/05/24/深入分析Runloop/index.html">
+<meta property="og:site_name" content="朝暮的闲暇时刻">
+<meta property="og:description" content="&amp;emsp;&amp;emsp;一般写的程序都是像下面这样的，代码一行行执行，到return的时候代码都已经执行完毕，程序退出。 1234int main(int argc, char * argv[]) &amp;#123;    /* 代码段 */    return 0;&amp;#125; &amp;emsp;&amp;emsp;但实际的应用中，我们的软件不可能像这样线性的执行，执行完我们的软件就退出，所以就需要一种技术，让我们">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-06-12T00:47:42.768Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入分析Runloop">
+<meta name="twitter:description" content="&amp;emsp;&amp;emsp;一般写的程序都是像下面这样的，代码一行行执行，到return的时候代码都已经执行完毕，程序退出。 1234int main(int argc, char * argv[]) &amp;#123;    /* 代码段 */    return 0;&amp;#125; &amp;emsp;&amp;emsp;但实际的应用中，我们的软件不可能像这样线性的执行，执行完我们的软件就退出，所以就需要一种技术，让我们">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://leylfl.github.io/2018/05/24/深入分析Runloop/"/>
+
+
+
+
+
+  <title>深入分析Runloop | 朝暮的闲暇时刻</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">朝暮的闲暇时刻</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://leylfl.github.io/2018/05/24/深入分析Runloop/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="朝暮">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="朝暮的闲暇时刻">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">深入分析Runloop</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-24T15:24:39+08:00">
+                2018-05-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&emsp;&emsp;一般写的程序都是像下面这样的，代码一行行执行，到return的时候代码都已经执行完毕，程序退出。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span> </span>&#123;</span><br><span class="line">    <span class="comment">/* 代码段 */</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;但实际的应用中，我们的软件不可能像这样线性的执行，执行完我们的软件就退出，所以就需要一种技术，让我们的软件始终保持运行状态。在iOS系统中，这项技术就是Runloop。</p>
+<h1 id="0x01-主要的结构信息"><a href="#0x01-主要的结构信息" class="headerlink" title="0x01 主要的结构信息"></a>0x01 主要的结构信息</h1><h3 id="1-CFRunloop"><a href="#1-CFRunloop" class="headerlink" title="1. CFRunloop"></a>1. CFRunloop</h3><p>&emsp;&emsp;Runloop都会对应一个线程。而且Runloop可以有多种模式，但是当前使用的只能是一种模式。我们的CFRunloop结构如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> __<span class="title">CFRunLoop</span> &#123;</span></span><br><span class="line">    CFRuntimeBase _base;</span><br><span class="line">    <span class="keyword">pthread_mutex_t</span> _lock;			<span class="comment">/* locked for accessing mode list */</span></span><br><span class="line">    __CFPort _wakeUpPort;			<span class="comment">// used for CFRunLoopWakeUp </span></span><br><span class="line">    Boolean _unused;</span><br><span class="line">    <span class="keyword">volatile</span> _per_run_data *_perRunData;              <span class="comment">// reset for runs of the run loop</span></span><br><span class="line">    <span class="keyword">pthread_t</span> _pthread;  <span class="comment">// 对应的线程</span></span><br><span class="line">    <span class="keyword">uint32_t</span> _winthread;</span><br><span class="line">    CFMutableSetRef _commonModes; <span class="comment">// 保存的commonMode</span></span><br><span class="line">    CFMutableSetRef _commonModeItems;</span><br><span class="line">    CFRunLoopModeRef _currentMode; <span class="comment">// 当前模式</span></span><br><span class="line">    CFMutableSetRef _modes; </span><br><span class="line">    <span class="class"><span class="keyword">struct</span> _<span class="title">block_item</span> *_<span class="title">blocks_head</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> _<span class="title">block_item</span> *_<span class="title">blocks_tail</span>;</span></span><br><span class="line">    CFAbsoluteTime _runTime;</span><br><span class="line">    CFAbsoluteTime _sleepTime;</span><br><span class="line">    CFTypeRef _counterpart;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="2-CFRunLoopMode"><a href="#2-CFRunLoopMode" class="headerlink" title="2. CFRunLoopMode"></a>2. CFRunLoopMode</h3><p>&emsp;&emsp;Mode管理着各种事件，我们的source0、source1、observer、timer都归mode管理。每个模式下又包含多个source0，source1，observer和timer。不同mode下的source0、source1、observer、timer都是隔离开的。</p>
+<p>&emsp;&emsp;如果Mode里面没有source0，source1，observer和timer，Runloop会立马退出。</p>
+<p>&emsp;&emsp;模式的结构如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> __<span class="title">CFRunLoopMode</span> &#123;</span></span><br><span class="line">    CFRuntimeBase _base;</span><br><span class="line">    <span class="keyword">pthread_mutex_t</span> _lock;	<span class="comment">/* must have the run loop locked before locking this */</span></span><br><span class="line">    CFStringRef _name;</span><br><span class="line">    Boolean _stopped;</span><br><span class="line">    <span class="keyword">char</span> _padding[<span class="number">3</span>];</span><br><span class="line">    <span class="comment">// 需要处理的几种事件</span></span><br><span class="line">    CFMutableSetRef _sources0;</span><br><span class="line">    CFMutableSetRef _sources1;</span><br><span class="line">    CFMutableArrayRef _observers;</span><br><span class="line">    CFMutableArrayRef _timers;</span><br><span class="line">    </span><br><span class="line">    CFMutableDictionaryRef _portToV1SourceMap; <span class="comment">// mach_port_t对应的CFRunLoopSourceRef</span></span><br><span class="line">    __CFPortSet _portSet; <span class="comment">// 所有要监听的mach_port_t</span></span><br><span class="line">    CFIndex _observerMask;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> USE_DISPATCH_SOURCE_FOR_TIMERS</span></span><br><span class="line">    <span class="keyword">dispatch_source_t</span> _timerSource;</span><br><span class="line">    <span class="keyword">dispatch_queue_t</span> _queue;</span><br><span class="line">    Boolean _timerFired; <span class="comment">// set to true by the source when a timer has fired</span></span><br><span class="line">    Boolean _dispatchTimerArmed;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> USE_MK_TIMER_TOO</span></span><br><span class="line">    <span class="keyword">mach_port_t</span> _timerPort;</span><br><span class="line">    Boolean _mkTimerArmed;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    <span class="keyword">uint64_t</span> _timerSoftDeadline; <span class="comment">/* TSR */</span></span><br><span class="line">    <span class="keyword">uint64_t</span> _timerHardDeadline; <span class="comment">/* TSR */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="3-CFRunLoopSource"><a href="#3-CFRunLoopSource" class="headerlink" title="3. CFRunLoopSource"></a>3. CFRunLoopSource</h3><p>&emsp;&emsp;source分为source0和source1。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> __<span class="title">CFRunLoopSource</span> &#123;</span></span><br><span class="line">    CFRuntimeBase _base;</span><br><span class="line">    <span class="keyword">uint32_t</span> _bits;</span><br><span class="line">    <span class="keyword">pthread_mutex_t</span> _lock;</span><br><span class="line">    CFIndex _order;			<span class="comment">/* immutable */</span></span><br><span class="line">    CFMutableBagRef _runLoops;</span><br><span class="line">    <span class="keyword">union</span> &#123;</span><br><span class="line">	CFRunLoopSourceContext version0;	<span class="comment">/* immutable, except invalidation */</span></span><br><span class="line">        CFRunLoopSourceContext1 version1;	<span class="comment">/* immutable, except invalidation */</span></span><br><span class="line">    &#125; _context;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;source0一般都是应用的内部事件，比如触摸事件、CFSocket等。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    CFIndex	version;</span><br><span class="line">    <span class="keyword">void</span> *	info;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">void</span> *(*retain)(<span class="keyword">const</span> <span class="keyword">void</span> *info);</span><br><span class="line">    <span class="keyword">void</span>	(*release)(<span class="keyword">const</span> <span class="keyword">void</span> *info);</span><br><span class="line">    CFStringRef	(*copyDescription)(<span class="keyword">const</span> <span class="keyword">void</span> *info);</span><br><span class="line">    Boolean	(*equal)(<span class="keyword">const</span> <span class="keyword">void</span> *info1, <span class="keyword">const</span> <span class="keyword">void</span> *info2);</span><br><span class="line">    CFHashCode	(*hash)(<span class="keyword">const</span> <span class="keyword">void</span> *info);</span><br><span class="line">    <span class="keyword">void</span>	(*schedule)(<span class="keyword">void</span> *info, CFRunLoopRef rl, CFStringRef mode);</span><br><span class="line">    <span class="keyword">void</span>	(*cancel)(<span class="keyword">void</span> *info, CFRunLoopRef rl, CFStringRef mode);</span><br><span class="line">    <span class="keyword">void</span>	(*perform)(<span class="keyword">void</span> *info);</span><br><span class="line">&#125; CFRunLoopSourceContext;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;source1一般与mach_port通信，所以接收的是内核态的信息。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    CFIndex	version;</span><br><span class="line">    <span class="keyword">void</span> *	info;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">void</span> *(*retain)(<span class="keyword">const</span> <span class="keyword">void</span> *info);</span><br><span class="line">    <span class="keyword">void</span>	(*release)(<span class="keyword">const</span> <span class="keyword">void</span> *info);</span><br><span class="line">    CFStringRef	(*copyDescription)(<span class="keyword">const</span> <span class="keyword">void</span> *info);</span><br><span class="line">    Boolean	(*equal)(<span class="keyword">const</span> <span class="keyword">void</span> *info1, <span class="keyword">const</span> <span class="keyword">void</span> *info2);</span><br><span class="line">    CFHashCode	(*hash)(<span class="keyword">const</span> <span class="keyword">void</span> *info);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> (TARGET_OS_MAC &amp;&amp; !(TARGET_OS_EMBEDDED || TARGET_OS_IPHONE)) || (TARGET_OS_EMBEDDED || TARGET_OS_IPHONE)</span></span><br><span class="line">    <span class="keyword">mach_port_t</span>	(*getPort)(<span class="keyword">void</span> *info); <span class="comment">// 相比source0多了mach_port_t，即端口，用于线程之间通信</span></span><br><span class="line">    <span class="keyword">void</span> *	(*perform)(<span class="keyword">void</span> *msg, CFIndex size, CFAllocatorRef allocator, <span class="keyword">void</span> *info);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">    <span class="keyword">void</span> *	(*getPort)(<span class="keyword">void</span> *info);</span><br><span class="line">    <span class="keyword">void</span>	(*perform)(<span class="keyword">void</span> *info);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">&#125; CFRunLoopSourceContext1;</span><br></pre></td></tr></table></figure>
+<h3 id="4-CFRunLoopObserver"><a href="#4-CFRunLoopObserver" class="headerlink" title="4. CFRunLoopObserver"></a>4. CFRunLoopObserver</h3><p>&emsp;&emsp;观察runloop的各种状态。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> __<span class="title">CFRunLoopObserver</span> &#123;</span></span><br><span class="line">    CFRuntimeBase _base;</span><br><span class="line">    <span class="keyword">pthread_mutex_t</span> _lock;</span><br><span class="line">    CFRunLoopRef _runLoop;</span><br><span class="line">    CFIndex _rlCount;</span><br><span class="line">    CFOptionFlags _activities;		<span class="comment">/* immutable */</span></span><br><span class="line">    CFIndex _order;			<span class="comment">/* immutable */</span></span><br><span class="line">    CFRunLoopObserverCallBack _callout;	<span class="comment">/* immutable */</span></span><br><span class="line">    CFRunLoopObserverContext _context;	<span class="comment">/* immutable, except invalidation */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;可被观察的状态有如下几种</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">CF_OPTIONS</span><span class="params">(CFOptionFlags, CFRunLoopActivity)</span> </span>&#123;</span><br><span class="line">    kCFRunLoopEntry = (<span class="number">1U</span>L &lt;&lt; <span class="number">0</span>), <span class="comment">// 进入runloop</span></span><br><span class="line">    kCFRunLoopBeforeTimers = (<span class="number">1U</span>L &lt;&lt; <span class="number">1</span>), <span class="comment">// 即将处理timer</span></span><br><span class="line">    kCFRunLoopBeforeSources = (<span class="number">1U</span>L &lt;&lt; <span class="number">2</span>), <span class="comment">// 即将处理source</span></span><br><span class="line">    kCFRunLoopBeforeWaiting = (<span class="number">1U</span>L &lt;&lt; <span class="number">5</span>), <span class="comment">// 即将进入睡眠</span></span><br><span class="line">    kCFRunLoopAfterWaiting = (<span class="number">1U</span>L &lt;&lt; <span class="number">6</span>), <span class="comment">// 唤醒后</span></span><br><span class="line">    kCFRunLoopExit = (<span class="number">1U</span>L &lt;&lt; <span class="number">7</span>), <span class="comment">// 退出runloop</span></span><br><span class="line">    kCFRunLoopAllActivities = <span class="number">0x0FFFFFFF</span>U</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="5-CFRunLoopTimer"><a href="#5-CFRunLoopTimer" class="headerlink" title="5. CFRunLoopTimer"></a>5. CFRunLoopTimer</h3><p>&emsp;&emsp;可以在设定的时间到达后触发回调。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> __<span class="title">CFRunLoopTimer</span> &#123;</span></span><br><span class="line">    CFRuntimeBase _base;</span><br><span class="line">    <span class="keyword">uint16_t</span> _bits;</span><br><span class="line">    <span class="keyword">pthread_mutex_t</span> _lock;</span><br><span class="line">    CFRunLoopRef _runLoop;</span><br><span class="line">    CFMutableSetRef _rlModes;</span><br><span class="line">    CFAbsoluteTime _nextFireDate;</span><br><span class="line">    CFTimeInterval _interval;		<span class="comment">/* immutable */</span></span><br><span class="line">    CFTimeInterval _tolerance;          <span class="comment">/* mutable */</span></span><br><span class="line">    <span class="keyword">uint64_t</span> _fireTSR;			<span class="comment">/* TSR units */</span></span><br><span class="line">    CFIndex _order;			<span class="comment">/* immutable */</span></span><br><span class="line">    CFRunLoopTimerCallBack _callout;	<span class="comment">/* immutable */</span></span><br><span class="line">    CFRunLoopTimerContext _context;	<span class="comment">/* immutable, except invalidation */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h1 id="0x02-获取线程"><a href="#0x02-获取线程" class="headerlink" title="0x02 获取线程"></a>0x02 获取线程</h1><h3 id="1-CFRunLoopGetMain"><a href="#1-CFRunLoopGetMain" class="headerlink" title="1. CFRunLoopGetMain"></a>1. CFRunLoopGetMain</h3><p>&emsp;&emsp;内部调用了<code>_CFRunLoopGet0</code>函数，传入的参数是主线程。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">CFRunLoopRef <span class="title">CFRunLoopGetMain</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    CHECK_FOR_FORK();</span><br><span class="line">    <span class="keyword">static</span> CFRunLoopRef __main = <span class="literal">NULL</span>; <span class="comment">// no retain needed</span></span><br><span class="line">    <span class="keyword">if</span> (!__main) __main = _CFRunLoopGet0(pthread_main_thread_np()); <span class="comment">// no CAS needed</span></span><br><span class="line">    <span class="keyword">return</span> __main;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-CFRunLoopGetCurrent"><a href="#2-CFRunLoopGetCurrent" class="headerlink" title="2. CFRunLoopGetCurrent"></a>2. CFRunLoopGetCurrent</h3><p>&emsp;&emsp;跟<code>CFRunLoopGetMain</code>函数一样，调用的同样是<code>_CFRunLoopGet0</code>函数，只是参数不同，这里的入参是当前所在线程。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">CFRunLoopRef <span class="title">CFRunLoopGetCurrent</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    CHECK_FOR_FORK();</span><br><span class="line">    CFRunLoopRef rl = (CFRunLoopRef)_CFGetTSD(__CFTSDKeyRunLoop);</span><br><span class="line">    <span class="keyword">if</span> (rl) <span class="keyword">return</span> rl;</span><br><span class="line">    <span class="keyword">return</span> _CFRunLoopGet0(pthread_self());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="3-CFRunLoopGet0"><a href="#3-CFRunLoopGet0" class="headerlink" title="3. CFRunLoopGet0"></a>3. CFRunLoopGet0</h3><p>&emsp;&emsp;既然<code>CFRunLoopGetMain</code>和<code>CFRunLoopGetCurrent</code>都调用了<code>_CFRunLoopGet0</code>函数，我们看下这个函数的实现。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">CF_EXPORT CFRunLoopRef _CFRunLoopGet0(<span class="keyword">pthread_t</span> t) &#123;</span><br><span class="line">    <span class="comment">// 如果线程为空，默认视作主线程</span></span><br><span class="line">    <span class="keyword">if</span> (pthread_equal(t, kNilPthreadT)) &#123;</span><br><span class="line">		t = pthread_main_thread_np();</span><br><span class="line">    &#125;</span><br><span class="line">    __CFLock(&amp;loopsLock);</span><br><span class="line">    <span class="comment">// __CFRunLoops是个CFMutableDictionaryRef类型的全局变量，用来保存RunLoop。这里首先判断有没有这个全局变量，如果没有就新创建一个这个全局变量，并同时创建一个主线程对应的runloop。</span></span><br><span class="line">    <span class="keyword">if</span> (!__CFRunLoops) &#123;</span><br><span class="line">        __CFUnlock(&amp;loopsLock);</span><br><span class="line">	CFMutableDictionaryRef dict = CFDictionaryCreateMutable(kCFAllocatorSystemDefault, <span class="number">0</span>, <span class="literal">NULL</span>, &amp;kCFTypeDictionaryValueCallBacks);</span><br><span class="line">       <span class="comment">// 创建一个主线程对应的runloop。</span></span><br><span class="line">	CFRunLoopRef mainLoop = __CFRunLoopCreate(pthread_main_thread_np());</span><br><span class="line">        <span class="comment">// 保存主线程</span></span><br><span class="line">	CFDictionarySetValue(dict, pthreadPointer(pthread_main_thread_np()), mainLoop);</span><br><span class="line">        <span class="comment">// 交换dict和__CFRunLoops，也就是这里开始__CFRunLoops就是刚刚创建的那个全局变量</span></span><br><span class="line">	<span class="keyword">if</span> (!OSAtomicCompareAndSwapPtrBarrier(<span class="literal">NULL</span>, dict, (<span class="keyword">void</span> * <span class="keyword">volatile</span> *)&amp;__CFRunLoops)) &#123;</span><br><span class="line">	    CFRelease(dict);</span><br><span class="line">	&#125;</span><br><span class="line">	CFRelease(mainLoop);</span><br><span class="line">        __CFLock(&amp;loopsLock);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 根据线程取其对应的runloop</span></span><br><span class="line">    CFRunLoopRef loop = (CFRunLoopRef)CFDictionaryGetValue(__CFRunLoops, pthreadPointer(t));</span><br><span class="line">    __CFUnlock(&amp;loopsLock);</span><br><span class="line">    <span class="comment">// 如果这个线程没有对应的runloop，就新建立一个runloop对象	</span></span><br><span class="line">    <span class="keyword">if</span> (!loop) &#123;</span><br><span class="line">		CFRunLoopRef newLoop = __CFRunLoopCreate(t);</span><br><span class="line">        __CFLock(&amp;loopsLock);</span><br><span class="line">        <span class="comment">// 二次确认，是否的确没有该线程对应的runloop</span></span><br><span class="line">		loop = (CFRunLoopRef)CFDictionaryGetValue(__CFRunLoops, pthreadPointer(t));</span><br><span class="line">		<span class="keyword">if</span> (!loop) &#123;</span><br><span class="line">            <span class="comment">// 如果的确没有对应的runloop，就保存进全局变量中</span></span><br><span class="line">	    	CFDictionarySetValue(__CFRunLoops, pthreadPointer(t), newLoop);</span><br><span class="line">	    	loop = newLoop;</span><br><span class="line">		&#125;</span><br><span class="line">        __CFUnlock(&amp;loopsLock);</span><br><span class="line">		CFRelease(newLoop);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (pthread_equal(t, pthread_self())) &#123;</span><br><span class="line">        _CFSetTSD(__CFTSDKeyRunLoop, (<span class="keyword">void</span> *)loop, <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (<span class="number">0</span> == _CFGetTSD(__CFTSDKeyRunLoopCntr)) &#123;</span><br><span class="line">            <span class="comment">// 注册一个回调，当线程销毁时一同销毁对应的runloop</span></span><br><span class="line">            _CFSetTSD(__CFTSDKeyRunLoopCntr, (<span class="keyword">void</span> *)(PTHREAD_DESTRUCTOR_ITERATIONS<span class="number">-1</span>), (<span class="keyword">void</span> (*)(<span class="keyword">void</span> *))__CFFinalizeRunLoop);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> loop;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;获取线程流程总结如下：</p>
+<ul>
+<li>有个全局变量保存着各个线程与各个runloop对象的关系，该变量初始化的时候会同时创建一个主线程对应的runloop对象。</li>
+<li>子线程的runloop默认是获取的时候才开始创建。所以多线程环境中，只有主线程的runloop是一开始就创建出来的，其他线程被创建的时候并不会一起创建一个runloop对象。</li>
+<li>runloop对象的生命周期和线程的生命周期同步。</li>
+</ul>
+<h1 id="0x03-创建RunLoop"><a href="#0x03-创建RunLoop" class="headerlink" title="0x03 创建RunLoop"></a>0x03 创建RunLoop</h1><p>&emsp;&emsp;上面我们的RunLoop是在获取的时候被创建的，创建源码如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> CFRunLoopRef __CFRunLoopCreate(<span class="keyword">pthread_t</span> t) &#123;</span><br><span class="line">    CFRunLoopRef loop = <span class="literal">NULL</span>;</span><br><span class="line">    CFRunLoopModeRef rlm;</span><br><span class="line">    <span class="keyword">uint32_t</span> size = <span class="keyword">sizeof</span>(struct __CFRunLoop) - <span class="keyword">sizeof</span>(CFRuntimeBase);</span><br><span class="line">    loop = (CFRunLoopRef)_CFRuntimeCreateInstance(kCFAllocatorSystemDefault, CFRunLoopGetTypeID(), size, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> == loop) &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    (<span class="keyword">void</span>)__CFRunLoopPushPerRunData(loop);</span><br><span class="line">    __CFRunLoopLockInit(&amp;loop-&gt;_lock);</span><br><span class="line">    loop-&gt;_wakeUpPort = __CFPortAllocate();</span><br><span class="line">    <span class="keyword">if</span> (CFPORT_NULL == loop-&gt;_wakeUpPort) HALT;</span><br><span class="line">    __CFRunLoopSetIgnoreWakeUps(loop);</span><br><span class="line">    loop-&gt;_commonModes = CFSetCreateMutable(kCFAllocatorSystemDefault, <span class="number">0</span>, &amp;kCFTypeSetCallBacks);</span><br><span class="line">    CFSetAddValue(loop-&gt;_commonModes, kCFRunLoopDefaultMode);</span><br><span class="line">    loop-&gt;_commonModeItems = <span class="literal">NULL</span>;</span><br><span class="line">    loop-&gt;_currentMode = <span class="literal">NULL</span>;</span><br><span class="line">    loop-&gt;_modes = CFSetCreateMutable(kCFAllocatorSystemDefault, <span class="number">0</span>, &amp;kCFTypeSetCallBacks);</span><br><span class="line">    loop-&gt;_blocks_head = <span class="literal">NULL</span>;</span><br><span class="line">    loop-&gt;_blocks_tail = <span class="literal">NULL</span>;</span><br><span class="line">    loop-&gt;_counterpart = <span class="literal">NULL</span>;</span><br><span class="line">    loop-&gt;_pthread = t;</span><br><span class="line">    loop-&gt;_winthread = <span class="number">0</span>;</span><br><span class="line">    rlm = __CFRunLoopFindMode(loop, kCFRunLoopDefaultMode, <span class="literal">true</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> != rlm) __CFRunLoopModeUnlock(rlm);</span><br><span class="line">    <span class="keyword">return</span> loop;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> CFRunLoopModeRef __CFRunLoopFindMode(CFRunLoopRef rl, CFStringRef modeName, Boolean create) &#123;</span><br><span class="line">    CHECK_FOR_FORK();</span><br><span class="line">    CFRunLoopModeRef rlm;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> __<span class="title">CFRunLoopMode</span> <span class="title">srlm</span>;</span></span><br><span class="line">    <span class="built_in">memset</span>(&amp;srlm, <span class="number">0</span>, <span class="keyword">sizeof</span>(srlm));</span><br><span class="line">    _CFRuntimeSetInstanceTypeIDAndIsa(&amp;srlm, __kCFRunLoopModeTypeID);</span><br><span class="line">    srlm._name = modeName;</span><br><span class="line">    rlm = (CFRunLoopModeRef)CFSetGetValue(rl-&gt;_modes, &amp;srlm);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> != rlm) &#123;</span><br><span class="line">		__CFRunLoopModeLock(rlm);</span><br><span class="line">	<span class="keyword">return</span> rlm;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!create) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    rlm = (CFRunLoopModeRef)_CFRuntimeCreateInstance(kCFAllocatorSystemDefault, __kCFRunLoopModeTypeID, <span class="keyword">sizeof</span>(struct __CFRunLoopMode) - <span class="keyword">sizeof</span>(CFRuntimeBase), <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> == rlm) &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    __CFRunLoopLockInit(&amp;rlm-&gt;_lock);</span><br><span class="line">    rlm-&gt;_name = CFStringCreateCopy(kCFAllocatorSystemDefault, modeName);</span><br><span class="line">    rlm-&gt;_stopped = <span class="literal">false</span>;</span><br><span class="line">    rlm-&gt;_portToV1SourceMap = <span class="literal">NULL</span>;</span><br><span class="line">    rlm-&gt;_sources0 = <span class="literal">NULL</span>;</span><br><span class="line">    rlm-&gt;_sources1 = <span class="literal">NULL</span>;</span><br><span class="line">    rlm-&gt;_observers = <span class="literal">NULL</span>;</span><br><span class="line">    rlm-&gt;_timers = <span class="literal">NULL</span>;</span><br><span class="line">    rlm-&gt;_observerMask = <span class="number">0</span>;</span><br><span class="line">    rlm-&gt;_portSet = __CFPortSetAllocate();</span><br><span class="line">    rlm-&gt;_timerSoftDeadline = UINT64_MAX;</span><br><span class="line">    rlm-&gt;_timerHardDeadline = UINT64_MAX;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">kern_return_t</span> ret = KERN_SUCCESS;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> USE_DISPATCH_SOURCE_FOR_TIMERS</span></span><br><span class="line">    rlm-&gt;_timerFired = <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// 新建一个runloop的队列，用来处理timer相关事件</span></span><br><span class="line">    rlm-&gt;_queue = _dispatch_runloop_root_queue_create_4CF(<span class="string">"Run Loop Mode Queue"</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">mach_port_t</span> queuePort = _dispatch_runloop_root_queue_get_port_4CF(rlm-&gt;_queue);</span><br><span class="line">    <span class="keyword">if</span> (queuePort == MACH_PORT_NULL) CRASH(<span class="string">"*** Unable to create run loop mode queue port. (%d) ***"</span>, <span class="number">-1</span>);</span><br><span class="line">    rlm-&gt;_timerSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, <span class="number">0</span>, <span class="number">0</span>, rlm-&gt;_queue);</span><br><span class="line">    </span><br><span class="line">    __block Boolean *timerFiredPointer = &amp;(rlm-&gt;_timerFired);</span><br><span class="line">    dispatch_source_set_event_handler(rlm-&gt;_timerSource, ^&#123;</span><br><span class="line">        *timerFiredPointer = <span class="literal">true</span>;</span><br><span class="line">    &#125;);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Set timer to far out there. The unique leeway makes this timer easy to spot in debug output.</span></span><br><span class="line">    _dispatch_source_set_runloop_timer_4CF(rlm-&gt;_timerSource, DISPATCH_TIME_FOREVER, DISPATCH_TIME_FOREVER, <span class="number">321</span>);</span><br><span class="line">    dispatch_resume(rlm-&gt;_timerSource);</span><br><span class="line">    </span><br><span class="line">    ret = __CFPortSetInsert(queuePort, rlm-&gt;_portSet);</span><br><span class="line">    <span class="keyword">if</span> (KERN_SUCCESS != ret) CRASH(<span class="string">"*** Unable to insert timer port into port set. (%d) ***"</span>, ret);</span><br><span class="line">    </span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> USE_MK_TIMER_TOO</span></span><br><span class="line">    rlm-&gt;_timerPort = mk_timer_create();</span><br><span class="line">    ret = __CFPortSetInsert(rlm-&gt;_timerPort, rlm-&gt;_portSet);</span><br><span class="line">    <span class="keyword">if</span> (KERN_SUCCESS != ret) CRASH(<span class="string">"*** Unable to insert timer port into port set. (%d) ***"</span>, ret);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    </span><br><span class="line">    ret = __CFPortSetInsert(rl-&gt;_wakeUpPort, rlm-&gt;_portSet);</span><br><span class="line">    <span class="keyword">if</span> (KERN_SUCCESS != ret) CRASH(<span class="string">"*** Unable to insert wake up port into port set. (%d) ***"</span>, ret);</span><br><span class="line"></span><br><span class="line">    CFSetAddValue(rl-&gt;_modes, rlm);</span><br><span class="line">    CFRelease(rlm);</span><br><span class="line">    __CFRunLoopModeLock(rlm);	<span class="comment">/* return mode locked */</span></span><br><span class="line">    <span class="keyword">return</span> rlm;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;构建一个mode的时候会同时创建一个GCD Queue，用来处理时间相关的任务。</p>
+<h1 id="0x04-运行RunLoop"><a href="#0x04-运行RunLoop" class="headerlink" title="0x04 运行RunLoop"></a>0x04 运行RunLoop</h1><p>&emsp;&emsp;runloop内部其实就是一个do…while()循环。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">CFRunLoopRun</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;	<span class="comment">/* DOES CALLOUT */</span></span><br><span class="line">    <span class="keyword">int32_t</span> result;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        result = CFRunLoopRunSpecific(CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, <span class="number">1.0e10</span>, <span class="literal">false</span>);</span><br><span class="line">        CHECK_FOR_FORK();</span><br><span class="line">    &#125; <span class="keyword">while</span> (kCFRunLoopRunStopped != result &amp;&amp; kCFRunLoopRunFinished != result);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;调用的是<code>CFRunLoopRunSpecific</code>函数，用<code>kCFRunLoopDefaultMode</code>模式进行启动</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">SInt32 <span class="title">CFRunLoopRunSpecific</span><span class="params">(CFRunLoopRef rl, CFStringRef modeName, CFTimeInterval seconds, Boolean returnAfterSourceHandled)</span> </span>&#123;     <span class="comment">/* DOES CALLOUT */</span></span><br><span class="line">    CHECK_FOR_FORK();</span><br><span class="line">    <span class="keyword">if</span> (__CFRunLoopIsDeallocating(rl)) <span class="keyword">return</span> kCFRunLoopRunFinished;</span><br><span class="line">    __CFRunLoopLock(rl);</span><br><span class="line">    <span class="comment">// 根据模式名字，找到对应模式</span></span><br><span class="line">    CFRunLoopModeRef currentMode = __CFRunLoopFindMode(rl, modeName, <span class="literal">false</span>);</span><br><span class="line">    <span class="comment">// 如果没有找到这个模式或者这个模式里是空的(source0\source1\timers都为空)，就退出runloop循环</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> == currentMode || __CFRunLoopModeIsEmpty(rl, currentMode, rl-&gt;_currentMode)) 	 &#123;</span><br><span class="line">		Boolean did = <span class="literal">false</span>;</span><br><span class="line">		<span class="keyword">if</span> (currentMode) __CFRunLoopModeUnlock(currentMode);</span><br><span class="line">		__CFRunLoopUnlock(rl);</span><br><span class="line">		<span class="keyword">return</span> did ? kCFRunLoopRunHandledSource : kCFRunLoopRunFinished;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">volatile</span> _per_run_data *previousPerRun = __CFRunLoopPushPerRunData(rl);</span><br><span class="line">    <span class="comment">// 取出runloop当前的模式</span></span><br><span class="line">    CFRunLoopModeRef previousMode = rl-&gt;_currentMode;</span><br><span class="line">    <span class="comment">// 将runloop的模式改为传进来的默认模式</span></span><br><span class="line">    rl-&gt;_currentMode = currentMode;</span><br><span class="line">    <span class="keyword">int32_t</span> result = kCFRunLoopRunFinished;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">// 通知observers要进入runloop了</span></span><br><span class="line">	<span class="keyword">if</span> (currentMode-&gt;_observerMask &amp; kCFRunLoopEntry ) __CFRunLoopDoObservers(rl, currentMode, kCFRunLoopEntry);</span><br><span class="line">    <span class="comment">// 主要工作内容还是在__CFRunLoopRun</span></span><br><span class="line">	result = __CFRunLoopRun(rl, currentMode, seconds, returnAfterSourceHandled, previousMode);</span><br><span class="line">    <span class="comment">// 通知observers要退出runloop了</span></span><br><span class="line">	<span class="keyword">if</span> (currentMode-&gt;_observerMask &amp; kCFRunLoopExit ) __CFRunLoopDoObservers(rl, currentMode, kCFRunLoopExit);</span><br><span class="line"></span><br><span class="line">    __CFRunLoopModeUnlock(currentMode);</span><br><span class="line">    __CFRunLoopPopPerRunData(rl, previousPerRun);</span><br><span class="line">	rl-&gt;_currentMode = previousMode;</span><br><span class="line">    __CFRunLoopUnlock(rl);</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;看下最重要的<code>__CFRunLoopRun</code>函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">int32_t</span> __CFRunLoopRun(CFRunLoopRef rl, CFRunLoopModeRef rlm, CFTimeInterval seconds, Boolean stopAfterHandle, CFRunLoopModeRef previousMode) &#123;</span><br><span class="line">    <span class="comment">// 获取当前mach的时间，纳秒级精度</span></span><br><span class="line">    <span class="keyword">uint64_t</span> startTSR = mach_absolute_time();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果runloop暂停或者mode暂停，那么就退出循环</span></span><br><span class="line">    <span class="keyword">if</span> (__CFRunLoopIsStopped(rl)) &#123;</span><br><span class="line">        __CFRunLoopUnsetStopped(rl);</span><br><span class="line">		<span class="keyword">return</span> kCFRunLoopRunStopped;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (rlm-&gt;_stopped) &#123;</span><br><span class="line">		rlm-&gt;_stopped = <span class="literal">false</span>;</span><br><span class="line">		<span class="keyword">return</span> kCFRunLoopRunStopped;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果是主线程并且是默认mode，将gcd获取主线程的端口赋值给dispatchPort，以便和主线程通信</span></span><br><span class="line">    <span class="keyword">mach_port_name_t</span> dispatchPort = MACH_PORT_NULL;</span><br><span class="line">    Boolean libdispatchQSafe = pthread_main_np() &amp;&amp; ((HANDLE_DISPATCH_ON_BASE_INVOCATION_ONLY &amp;&amp; <span class="literal">NULL</span> == previousMode) || (!HANDLE_DISPATCH_ON_BASE_INVOCATION_ONLY &amp;&amp; <span class="number">0</span> == _CFGetTSD(__CFTSDKeyIsInGCDMainQ)));</span><br><span class="line">    <span class="keyword">if</span> (libdispatchQSafe &amp;&amp; (CFRunLoopGetMain() == rl) &amp;&amp; CFSetContainsValue(rl-&gt;_commonModes, rlm-&gt;_name)) dispatchPort = _dispatch_get_main_queue_port_4CF();</span><br><span class="line">    </span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> USE_DISPATCH_SOURCE_FOR_TIMERS</span></span><br><span class="line">    <span class="comment">// 将gcd中根队列的端口赋值给modeQueuePort</span></span><br><span class="line">    <span class="keyword">mach_port_name_t</span> modeQueuePort = MACH_PORT_NULL;</span><br><span class="line">    <span class="keyword">if</span> (rlm-&gt;_queue) &#123;</span><br><span class="line">        <span class="comment">// cgd根队列管理着所有的子队列，获取根队列的端口，方便与其通信，来处理后面传递进队列的任务</span></span><br><span class="line">        modeQueuePort = _dispatch_runloop_root_queue_get_port_4CF(rlm-&gt;_queue);</span><br><span class="line">        <span class="keyword">if</span> (!modeQueuePort) &#123;</span><br><span class="line">            CRASH(<span class="string">"Unable to get port for run loop mode queue (%d)"</span>, <span class="number">-1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 看入参的超时时间，如果是在可取范围内的，就设置一个定时器，如果时间到了就跳到__CFRunLoopTimeout处理超时后要做的事。</span></span><br><span class="line">    <span class="keyword">dispatch_source_t</span> timeout_timer = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> __<span class="title">timeout_context</span> *<span class="title">timeout_context</span> = (<span class="title">struct</span> __<span class="title">timeout_context</span> *)<span class="title">malloc</span>(<span class="title">sizeof</span>(*<span class="title">timeout_context</span>));</span></span><br><span class="line">    <span class="keyword">if</span> (seconds &lt;= <span class="number">0.0</span>) &#123; <span class="comment">// instant timeout</span></span><br><span class="line">        seconds = <span class="number">0.0</span>;</span><br><span class="line">        timeout_context-&gt;termTSR = <span class="number">0U</span>LL;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (seconds &lt;= TIMER_INTERVAL_LIMIT) &#123;</span><br><span class="line">	<span class="keyword">dispatch_queue_t</span> <span class="built_in">queue</span> = pthread_main_np() ? __CFDispatchQueueGetGenericMatchingMain() : __CFDispatchQueueGetGenericBackground();</span><br><span class="line">	timeout_timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, <span class="number">0</span>, <span class="number">0</span>, <span class="built_in">queue</span>);</span><br><span class="line">        dispatch_retain(timeout_timer);</span><br><span class="line">	timeout_context-&gt;ds = timeout_timer;</span><br><span class="line">	timeout_context-&gt;rl = (CFRunLoopRef)CFRetain(rl);</span><br><span class="line">	timeout_context-&gt;termTSR = startTSR + __CFTimeIntervalToTSR(seconds);</span><br><span class="line">	dispatch_set_context(timeout_timer, timeout_context); <span class="comment">// source gets ownership of context</span></span><br><span class="line">	dispatch_source_set_event_handler_f(timeout_timer, __CFRunLoopTimeout);</span><br><span class="line">        dispatch_source_set_cancel_handler_f(timeout_timer, __CFRunLoopTimeoutCancel);</span><br><span class="line">        <span class="keyword">uint64_t</span> ns_at = (<span class="keyword">uint64_t</span>)((__CFTSRToTimeInterval(startTSR) + seconds) * <span class="number">1000000000U</span>LL);</span><br><span class="line">        dispatch_source_set_timer(timeout_timer, dispatch_time(<span class="number">1</span>, ns_at), DISPATCH_TIME_FOREVER, <span class="number">1000U</span>LL);</span><br><span class="line">        dispatch_resume(timeout_timer);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123; <span class="comment">// infinite timeout</span></span><br><span class="line">        seconds = <span class="number">9999999999.0</span>;</span><br><span class="line">        timeout_context-&gt;termTSR = UINT64_MAX;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Boolean didDispatchPortLastTime = <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">int32_t</span> retVal = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">		......</span><br><span class="line">        <span class="keyword">uint8_t</span> msg_buffer[<span class="number">3</span> * <span class="number">1024</span>]; <span class="comment">// 消息缓存池</span></span><br><span class="line">        <span class="keyword">mach_msg_header_t</span> *msg = <span class="literal">NULL</span>;</span><br><span class="line">        <span class="keyword">mach_port_t</span> livePort = MACH_PORT_NULL;</span><br><span class="line">        ......</span><br><span class="line">		__CFPortSet waitSet = rlm-&gt;_portSet; <span class="comment">// 需要监听的port</span></span><br><span class="line">	</span><br><span class="line">        __CFRunLoopUnsetIgnoreWakeUps(rl);</span><br><span class="line">		<span class="comment">// 通知observers即将处理timer事件</span></span><br><span class="line">        <span class="keyword">if</span> (rlm-&gt;_observerMask &amp; kCFRunLoopBeforeTimers) __CFRunLoopDoObservers(rl, rlm, kCFRunLoopBeforeTimers);</span><br><span class="line">        <span class="comment">// 通知observers即将处理source0事件</span></span><br><span class="line">        <span class="keyword">if</span> (rlm-&gt;_observerMask &amp; kCFRunLoopBeforeSources) __CFRunLoopDoObservers(rl, rlm, kCFRunLoopBeforeSources);</span><br><span class="line">		<span class="comment">// 执行当前runloop链表内的每个block任务,即CFRunLoopPerformBlock加入的block任务</span></span><br><span class="line">		__CFRunLoopDoBlocks(rl, rlm);</span><br><span class="line">		<span class="comment">// 处理source0事件</span></span><br><span class="line">        Boolean sourceHandledThisLoop = __CFRunLoopDoSources0(rl, rlm, stopAfterHandle);</span><br><span class="line">        <span class="keyword">if</span> (sourceHandledThisLoop) &#123;</span><br><span class="line">            <span class="comment">// 如果有再次处理block任务</span></span><br><span class="line">            __CFRunLoopDoBlocks(rl, rlm);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">        Boolean poll = sourceHandledThisLoop || (<span class="number">0U</span>LL == timeout_context-&gt;termTSR);</span><br><span class="line">		<span class="comment">// 如果有source1，处理source1事件</span></span><br><span class="line">        <span class="comment">// 循环中第一次的循环didDispatchPortLastTime为YES，所以这个分支在第一次循环的时候不会进入</span></span><br><span class="line">        <span class="keyword">if</span> (MACH_PORT_NULL != dispatchPort &amp;&amp; !didDispatchPortLastTime) &#123;</span><br><span class="line">            msg = (<span class="keyword">mach_msg_header_t</span> *)msg_buffer;</span><br><span class="line">            <span class="keyword">if</span> (__CFRunLoopServiceMachPort(dispatchPort, &amp;msg, <span class="keyword">sizeof</span>(msg_buffer), &amp;livePort, <span class="number">0</span>, &amp;voucherState, <span class="literal">NULL</span>)) &#123;</span><br><span class="line">                <span class="keyword">goto</span> handle_msg;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        didDispatchPortLastTime = <span class="literal">false</span>;</span><br><span class="line">		<span class="comment">// 通知observers即将休眠</span></span><br><span class="line">		<span class="keyword">if</span> (!poll &amp;&amp; (rlm-&gt;_observerMask &amp; kCFRunLoopBeforeWaiting)) __CFRunLoopDoObservers(rl, rlm, kCFRunLoopBeforeWaiting);</span><br><span class="line">        <span class="comment">// 设置为休眠状态</span></span><br><span class="line">		__CFRunLoopSetSleeping(rl);</span><br><span class="line"></span><br><span class="line">        __CFPortSetInsert(dispatchPort, waitSet);</span><br><span class="line">        </span><br><span class="line">		__CFRunLoopModeUnlock(rlm);</span><br><span class="line">		__CFRunLoopUnlock(rl);</span><br><span class="line"></span><br><span class="line">        CFAbsoluteTime sleepStart = poll ? <span class="number">0.0</span> : CFAbsoluteTimeGetCurrent();</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 睡眠中，有个循环接收端口消息</span></span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (kCFUseCollectableAllocator) &#123;</span><br><span class="line">                <span class="built_in">memset</span>(msg_buffer, <span class="number">0</span>, <span class="keyword">sizeof</span>(msg_buffer));</span><br><span class="line">            &#125;</span><br><span class="line">            msg = (<span class="keyword">mach_msg_header_t</span> *)msg_buffer;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 内部调用mach_msg函数接收消息，以便接收到消息立刻唤醒runloop，如果没有消息，就让线程休眠</span></span><br><span class="line">            __CFRunLoopServiceMachPort(waitSet, &amp;msg, <span class="keyword">sizeof</span>(msg_buffer), &amp;livePort, poll ? <span class="number">0</span> : TIMEOUT_INFINITY, &amp;voucherState, &amp;voucherCopy);</span><br><span class="line">            <span class="comment">// 如果收到来自runloop queue队列的事件，里面一般都是timer相关事件</span></span><br><span class="line">            <span class="keyword">if</span> (modeQueuePort != MACH_PORT_NULL &amp;&amp; livePort == modeQueuePort) &#123;</span><br><span class="line">                <span class="comment">// 按个取出任务执行</span></span><br><span class="line">                <span class="keyword">while</span> (_dispatch_runloop_root_queue_perform_4CF(rlm-&gt;_queue));</span><br><span class="line">                <span class="keyword">if</span> (rlm-&gt;_timerFired) &#123;</span><br><span class="line">      </span><br><span class="line">                    rlm-&gt;_timerFired = <span class="literal">false</span>;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">if</span> (msg &amp;&amp; msg != (<span class="keyword">mach_msg_header_t</span> *)msg_buffer) <span class="built_in">free</span>(msg);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// Go ahead and leave the inner loop.</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">while</span> (<span class="number">1</span>);</span><br><span class="line">        </span><br><span class="line">        __CFRunLoopLock(rl);</span><br><span class="line">        __CFRunLoopModeLock(rlm);</span><br><span class="line"></span><br><span class="line">        rl-&gt;_sleepTime += (poll ? <span class="number">0.0</span> : (CFAbsoluteTimeGetCurrent() - sleepStart));</span><br><span class="line"></span><br><span class="line">        __CFPortSetRemove(dispatchPort, waitSet);</span><br><span class="line">        </span><br><span class="line">        __CFRunLoopSetIgnoreWakeUps(rl);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// user callouts now OK again</span></span><br><span class="line">		__CFRunLoopUnsetSleeping(rl);</span><br><span class="line">       <span class="comment">// 通知observers即将醒来</span></span><br><span class="line">		<span class="keyword">if</span> (!poll &amp;&amp; (rlm-&gt;_observerMask &amp; kCFRunLoopAfterWaiting)) __CFRunLoopDoObservers(rl, rlm, kCFRunLoopAfterWaiting);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理收到的消息</span></span><br><span class="line">handle_msg:;</span><br><span class="line">        __CFRunLoopSetIgnoreWakeUps(rl);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (MACH_PORT_NULL == livePort) &#123;</span><br><span class="line">            CFRUNLOOP_WAKEUP_FOR_NOTHING();</span><br><span class="line">            <span class="comment">// handle nothing</span></span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (livePort == rl-&gt;_wakeUpPort) &#123;</span><br><span class="line">            CFRUNLOOP_WAKEUP_FOR_WAKEUP();</span><br><span class="line">        &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> USE_DISPATCH_SOURCE_FOR_TIMERS</span></span><br><span class="line">        <span class="comment">// 被timer相关唤醒，处理timer</span></span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (modeQueuePort != MACH_PORT_NULL &amp;&amp; livePort == modeQueuePort) &#123;</span><br><span class="line">            CFRUNLOOP_WAKEUP_FOR_TIMER();</span><br><span class="line">            <span class="keyword">if</span> (!__CFRunLoopDoTimers(rl, rlm, mach_absolute_time())) &#123;</span><br><span class="line">                <span class="comment">// Re-arm the next timer, because we apparently fired early</span></span><br><span class="line">                __CFArmNextTimerInMode(rlm, rl);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> USE_MK_TIMER_TOO</span></span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (rlm-&gt;_timerPort != MACH_PORT_NULL &amp;&amp; livePort == rlm-&gt;_timerPort) &#123;</span><br><span class="line">            CFRUNLOOP_WAKEUP_FOR_TIMER();</span><br><span class="line">            <span class="keyword">if</span> (!__CFRunLoopDoTimers(rl, rlm, mach_absolute_time())) &#123;</span><br><span class="line">                <span class="comment">// Re-arm the next timer</span></span><br><span class="line">                __CFArmNextTimerInMode(rlm, rl);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (livePort == dispatchPort) &#123; <span class="comment">// 如果是主线程任务，处理主线程任务。</span></span><br><span class="line">            CFRUNLOOP_WAKEUP_FOR_DISPATCH();</span><br><span class="line">            __CFRunLoopModeUnlock(rlm);</span><br><span class="line">            __CFRunLoopUnlock(rl);</span><br><span class="line">            _CFSetTSD(__CFTSDKeyIsInGCDMainQ, (<span class="keyword">void</span> *)<span class="number">6</span>, <span class="literal">NULL</span>);</span><br><span class="line">            <span class="comment">// 内部是_dispatch_main_queue_callback_4CF</span></span><br><span class="line">            __CFRUNLOOP_IS_SERVICING_THE_MAIN_DISPATCH_QUEUE__(msg);</span><br><span class="line">            _CFSetTSD(__CFTSDKeyIsInGCDMainQ, (<span class="keyword">void</span> *)<span class="number">0</span>, <span class="literal">NULL</span>);</span><br><span class="line">            __CFRunLoopLock(rl);</span><br><span class="line">            __CFRunLoopModeLock(rlm);</span><br><span class="line">            sourceHandledThisLoop = <span class="literal">true</span>;</span><br><span class="line">            didDispatchPortLastTime = <span class="literal">true</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            CFRUNLOOP_WAKEUP_FOR_SOURCE();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">voucher_t</span> previousVoucher = _CFSetTSD(__CFTSDKeyMachMessageHasVoucher, (<span class="keyword">void</span> *)voucherCopy, os_release);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Despite the name, this works for windows handles as well</span></span><br><span class="line">            CFRunLoopSourceRef rls = __CFRunLoopModeFindSourceForMachPort(rl, rlm, livePort);</span><br><span class="line">            <span class="comment">// 有source1事件处理，就处理source1事件</span></span><br><span class="line">            <span class="keyword">if</span> (rls) &#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> DEPLOYMENT_TARGET_MACOSX || DEPLOYMENT_TARGET_EMBEDDED || DEPLOYMENT_TARGET_EMBEDDED_MINI</span></span><br><span class="line">				<span class="keyword">mach_msg_header_t</span> *reply = <span class="literal">NULL</span>;</span><br><span class="line">				sourceHandledThisLoop = __CFRunLoopDoSource1(rl, rlm, rls, msg, msg-&gt;msgh_size, &amp;reply) || sourceHandledThisLoop;</span><br><span class="line">				<span class="keyword">if</span> (<span class="literal">NULL</span> != reply) &#123;</span><br><span class="line">		    		(<span class="keyword">void</span>)mach_msg(reply, MACH_SEND_MSG, reply-&gt;msgh_size, <span class="number">0</span>, MACH_PORT_NULL, <span class="number">0</span>, MACH_PORT_NULL);</span><br><span class="line">		    		CFAllocatorDeallocate(kCFAllocatorSystemDefault, reply);</span><br><span class="line">				&#125;</span><br><span class="line">	    	&#125;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// Restore the previous voucher</span></span><br><span class="line">            _CFSetTSD(__CFTSDKeyMachMessageHasVoucher, previousVoucher, os_release);</span><br><span class="line">            </span><br><span class="line">        &#125; </span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> DEPLOYMENT_TARGET_MACOSX || DEPLOYMENT_TARGET_EMBEDDED || DEPLOYMENT_TARGET_EMBEDDED_MINI</span></span><br><span class="line">        <span class="keyword">if</span> (msg &amp;&amp; msg != (<span class="keyword">mach_msg_header_t</span> *)msg_buffer) <span class="built_in">free</span>(msg);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">        <span class="comment">// 处理加入到loop的block</span></span><br><span class="line">		__CFRunLoopDoBlocks(rl, rlm);</span><br><span class="line">        </span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (sourceHandledThisLoop &amp;&amp; stopAfterHandle) &#123;</span><br><span class="line">	    retVal = kCFRunLoopRunHandledSource;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (timeout_context-&gt;termTSR &lt; mach_absolute_time()) &#123;</span><br><span class="line">            retVal = kCFRunLoopRunTimedOut;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (__CFRunLoopIsStopped(rl)) &#123; <span class="comment">// 如果runloop被停止</span></span><br><span class="line">            __CFRunLoopUnsetStopped(rl);</span><br><span class="line">	    retVal = kCFRunLoopRunStopped;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (rlm-&gt;_stopped) &#123; <span class="comment">// 如果mode被停止</span></span><br><span class="line">	    rlm-&gt;_stopped = <span class="literal">false</span>;</span><br><span class="line">	    retVal = kCFRunLoopRunStopped;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (__CFRunLoopModeIsEmpty(rl, rlm, previousMode)) &#123; <span class="comment">// 如果模式里是空的</span></span><br><span class="line">	    retVal = kCFRunLoopRunFinished;</span><br><span class="line">	&#125;</span><br><span class="line">        </span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> DEPLOYMENT_TARGET_MACOSX || DEPLOYMENT_TARGET_EMBEDDED || DEPLOYMENT_TARGET_EMBEDDED_MINI</span></span><br><span class="line">        voucher_mach_msg_revert(voucherState);</span><br><span class="line">        os_release(voucherCopy);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="number">0</span> == retVal);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (timeout_timer) &#123;</span><br><span class="line">        dispatch_source_cancel(timeout_timer);</span><br><span class="line">        dispatch_release(timeout_timer);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">free</span>(timeout_context);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> retVal;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;启动runloop主要流程</p>
+<ol>
+<li>通知observers即将进入runloop</li>
+<li>通知observers即将处理timers事件</li>
+<li>通知observers即将处理source事件<ul>
+<li>处理blocks</li>
+<li>处理source0</li>
+</ul>
+</li>
+<li>通知observers即将休眠(内部有个循环接收消息)</li>
+<li>通知observers结束休眠，并回到第2步</li>
+<li>处理消息<ul>
+<li>处理timer事件</li>
+<li>处理主线程任务</li>
+<li>处理blocks</li>
+<li>回到第2步</li>
+</ul>
+</li>
+<li>通知observers即将退出runloop</li>
+</ol>
+<h1 id="0x05-使用"><a href="#0x05-使用" class="headerlink" title="0x05 使用"></a>0x05 使用</h1><h3 id="NSTimer"><a href="#NSTimer" class="headerlink" title="NSTimer"></a>NSTimer</h3><p>&emsp;&emsp;在RunLoop中，关于定时器经常遇到的问题就是滑动的时候定时器就不走动了。解决方案也是很熟悉，把timer加入<code>NSRunLoopCommonModes</code> 或者同时加入到<code>NSDefaultRunLoopMode</code> 和<code>UITrackingRunLoopMode</code> 。</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[[<span class="built_in">NSRunLoop</span> currentRunLoop] addTimer:<span class="keyword">self</span>.timer forMode:<span class="built_in">NSRunLoopCommonModes</span>];</span><br><span class="line">或者</span><br><span class="line">[[<span class="built_in">NSRunLoop</span> currentRunLoop] addTimer:<span class="keyword">self</span>.timer forMode:<span class="built_in">NSDefaultRunLoopMode</span>];</span><br><span class="line">[[<span class="built_in">NSRunLoop</span> currentRunLoop] addTimer:<span class="keyword">self</span>.timer forMode:<span class="built_in">UITrackingRunLoopMode</span>];</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;其中<code>NSRunLoopCommonModes</code>其实是一个mode集合，里面包括所有的被标记为<code>common</code>的mode，比如<code>NSDefaultRunLoopMode</code>、<code>UITrackingRunLoopMode</code>。</p>
+<p>&emsp;&emsp;RunLoop同一时刻下只能跑在一个mode上，所以Timer不走动就是因为如果只加入到一种mode下，切换到别的mode，比如滑动页面就会切换到<code>UITrackingRunLoopMode</code>，Timer就因为在该模式下没有注册，所以不会响应Timer事件。</p>
+<h3 id="线程保活"><a href="#线程保活" class="headerlink" title="线程保活"></a>线程保活</h3><p>&emsp;&emsp;比如子线程内请求一个网络数据，但是等待完成需要等一会，这就会导致得到数据的时候子线程就被回收掉了。要想子线程一直存在，我们可以利用RunLoop，在子线程写下如下代码就可以使得线程保活。</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">NSRunLoop</span> *runLoop = [<span class="built_in">NSRunLoop</span> currentRunLoop];</span><br><span class="line">[runLoop addPort:[<span class="built_in">NSMachPort</span> port] forMode:<span class="built_in">NSDefaultRunLoopMode</span>];</span><br><span class="line">[runLoop run];</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;但是这样又会有一个问题，我们看下对于<code>run</code>方法的描述</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Puts the receiver into a permanent loop, during which time it processes data from all attached input sources.</span><br><span class="line">If no input sources or timers are attached to the run loop, this method exits immediately; otherwise, it runs the receiver in the NSDefaultRunLoopMode by repeatedly invoking runMode:beforeDate:. In other words, this method effectively begins an infinite loop that processes data from the run loop’s input sources and timers.</span><br><span class="line">Manually removing all known input sources and timers from the run loop is not a guarantee that the run loop will exit. macOS can install and remove additional input sources as needed to process requests targeted at the receiver’s thread. Those sources could therefore prevent the run loop from exiting.</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;简单来说就是<code>run</code>方法内部是个无限循环，无限调用<code>runMode:beforeDate:</code>方法，并且即时删除mode下所有的source和timer也不能停止。如果创建多个线程，并都通过run启用RunLoop，就会造成内存泄露的问题，如果想要其变得可控，官方也给了建议，自己手动写了while，并且通过一个全局变量来控制什么时候结束这个循环。</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">BOOL</span> shouldKeepRunning = <span class="literal">YES</span>; <span class="comment">// global</span></span><br><span class="line"><span class="built_in">NSRunLoop</span> *theRL = [<span class="built_in">NSRunLoop</span> currentRunLoop];</span><br><span class="line"><span class="keyword">while</span> (shouldKeepRunning &amp;&amp; [theRL runMode:<span class="built_in">NSDefaultRunLoopMode</span> beforeDate:[<span class="built_in">NSDate</span> distantFuture]]);</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;停止RunLoop的伪代码可以写成这样的</p>
+<figure class="highlight obj-c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)stop &#123;</span><br><span class="line">    <span class="keyword">self</span>.shouldKeepRunning = <span class="literal">NO</span>;</span><br><span class="line">    <span class="built_in">CFRunLoopStop</span>(<span class="built_in">CFRunLoopGetCurrent</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;我们总结一下启动RunLoop的几种方式</p>
+<ul>
+<li><p><code>run</code></p>
+<blockquote>
+<p>无限循环，终止不掉</p>
+</blockquote>
+</li>
+<li><p><code>runUntilDate:</code></p>
+<blockquote>
+<p>内部同样重复调用<code>runMode:beforeDate:</code>，但是时间到了就结束，不再调用；或者通过<code>CFRunLoopStop</code>结束</p>
+</blockquote>
+</li>
+<li><p><code>runMode:beforeDate:</code></p>
+<blockquote>
+<p>只调用一次；或者通过<code>CFRunLoopStop</code>结束</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="AutoreleasePool"><a href="#AutoreleasePool" class="headerlink" title="AutoreleasePool"></a>AutoreleasePool</h3><p>&emsp;&emsp;我们知道<code>[NSRunLoop currentRunLoop]</code>用来获取当前RunLoop，如果没有就会创建一个RunLoop，我们看下其内部汇编代码，发现会自动开启AutoreleasePool。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">Foundation</span>`+[NSRunLoop(NSRunLoop) currentRunLoop]:</span><br><span class="line">    <span class="number">0x1853c7ea4</span> &lt;+<span class="number">0</span>&gt;:  stp    x20, x19, [<span class="built_in">sp</span>, #-<span class="number">0x20</span>]!</span><br><span class="line">    <span class="number">0x1853c7ea8</span> &lt;+<span class="number">4</span>&gt;:  stp    x29, x30, [<span class="built_in">sp</span>, <span class="number">#0x10</span>]</span><br><span class="line">    <span class="number">0x1853c7eac</span> &lt;+<span class="number">8</span>&gt;:  <span class="keyword">add </span>   x29, <span class="built_in">sp</span>, <span class="number">#0x10</span>            <span class="comment">; =0x10 </span></span><br><span class="line">    <span class="number">0x1853c7eb0</span> &lt;+<span class="number">12</span>&gt;: <span class="keyword">mov </span>   x0, <span class="number">#0x0</span></span><br><span class="line">    <span class="number">0x1853c7eb4</span> &lt;+<span class="number">16</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x185416114</span>               <span class="comment">; NSPushAutoreleasePool</span></span><br><span class="line">    <span class="number">0x1853c7eb8</span> &lt;+<span class="number">20</span>&gt;: <span class="keyword">mov </span>   x19, x0</span><br><span class="line">    <span class="number">0x1853c7ebc</span> &lt;+<span class="number">24</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x18495545c</span>               <span class="comment">; CFRunLoopGetCurrent</span></span><br><span class="line">    <span class="number">0x1853c7ec0</span> &lt;+<span class="number">28</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x184958a74</span>               <span class="comment">; _CFRunLoopGet2</span></span><br><span class="line">    <span class="number">0x1853c7ec4</span> &lt;+<span class="number">32</span>&gt;: <span class="keyword">mov </span>   x20, x0</span><br><span class="line">    <span class="number">0x1853c7ec8</span> &lt;+<span class="number">36</span>&gt;: <span class="keyword">mov </span>   x0, x19</span><br><span class="line">    <span class="number">0x1853c7ecc</span> &lt;+<span class="number">40</span>&gt;: <span class="keyword">bl </span>    <span class="number">0x185416118</span>               <span class="comment">; NSPopAutoreleasePool</span></span><br><span class="line">    <span class="number">0x1853c7ed0</span> &lt;+<span class="number">44</span>&gt;: <span class="keyword">mov </span>   x0, x20</span><br><span class="line">    <span class="number">0x1853c7ed4</span> &lt;+<span class="number">48</span>&gt;: ldp    x29, x30, [<span class="built_in">sp</span>, <span class="number">#0x10</span>]</span><br><span class="line">    <span class="number">0x1853c7ed8</span> &lt;+<span class="number">52</span>&gt;: ldp    x20, x19, [<span class="built_in">sp</span>], <span class="number">#0x20</span></span><br><span class="line">    <span class="number">0x1853c7edc</span> &lt;+<span class="number">56</span>&gt;: ret</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/21/深入分析Runtime/" rel="next" title="深入分析Runtime">
+                <i class="fa fa-chevron-left"></i> 深入分析Runtime
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/05/26/iOS的内存管理/" rel="prev" title="iOS的内存管理">
+                iOS的内存管理 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">朝暮</p>
+              <p class="site-description motion-element" itemprop="description">联系方式：leylfl@foxmail.com</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-主要的结构信息"><span class="nav-number">1.</span> <span class="nav-text">0x01 主要的结构信息</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-CFRunloop"><span class="nav-number">1.0.1.</span> <span class="nav-text">1. CFRunloop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-CFRunLoopMode"><span class="nav-number">1.0.2.</span> <span class="nav-text">2. CFRunLoopMode</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-CFRunLoopSource"><span class="nav-number">1.0.3.</span> <span class="nav-text">3. CFRunLoopSource</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-CFRunLoopObserver"><span class="nav-number">1.0.4.</span> <span class="nav-text">4. CFRunLoopObserver</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-CFRunLoopTimer"><span class="nav-number">1.0.5.</span> <span class="nav-text">5. CFRunLoopTimer</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-获取线程"><span class="nav-number">2.</span> <span class="nav-text">0x02 获取线程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-CFRunLoopGetMain"><span class="nav-number">2.0.1.</span> <span class="nav-text">1. CFRunLoopGetMain</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-CFRunLoopGetCurrent"><span class="nav-number">2.0.2.</span> <span class="nav-text">2. CFRunLoopGetCurrent</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-CFRunLoopGet0"><span class="nav-number">2.0.3.</span> <span class="nav-text">3. CFRunLoopGet0</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-创建RunLoop"><span class="nav-number">3.</span> <span class="nav-text">0x03 创建RunLoop</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x04-运行RunLoop"><span class="nav-number">4.</span> <span class="nav-text">0x04 运行RunLoop</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-使用"><span class="nav-number">5.</span> <span class="nav-text">0x05 使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#NSTimer"><span class="nav-number">5.0.1.</span> <span class="nav-text">NSTimer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#线程保活"><span class="nav-number">5.0.2.</span> <span class="nav-text">线程保活</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AutoreleasePool"><span class="nav-number">5.0.3.</span> <span class="nav-text">AutoreleasePool</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">朝暮</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

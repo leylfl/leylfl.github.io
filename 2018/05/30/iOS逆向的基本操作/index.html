@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="0x01 使用OpenSSH登录iPhone&amp;emsp;&amp;emsp; 首先在Cydia安装OpenSSH插件     SSL：Secure Sockets Layer，是为了网络通信提供安全及数据完整性的一种安全协议，在传输层对网络连接进行加密。 OpenSSL：是SSL的开源实现，绝大部分的https其实就是http+openssl OpenSSH：远程登录，并且可以保证登录的安全性，安全性指的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS逆向的基本操作">
+<meta property="og:url" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/index.html">
+<meta property="og:site_name" content="朝暮的闲暇时刻">
+<meta property="og:description" content="0x01 使用OpenSSH登录iPhone&amp;emsp;&amp;emsp; 首先在Cydia安装OpenSSH插件     SSL：Secure Sockets Layer，是为了网络通信提供安全及数据完整性的一种安全协议，在传输层对网络连接进行加密。 OpenSSL：是SSL的开源实现，绝大部分的https其实就是http+openssl OpenSSH：远程登录，并且可以保证登录的安全性，安全性指的">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/cydia_openssh.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/login_1.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/login_2.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/usbmuxd_tool.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/usbmuxd_operation_1.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/cy_enter.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/hidden_redView.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample1_ps.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample1_cy_app.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample1_cy_ivars.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample1_cy_views.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample1_cy_tool_path.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample1_cy_tool.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/reveal_install.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/reveal_app.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/reveal_install_libary.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/reveal_install_server.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/reveal_catch.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/debug_append.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample2_demo.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample2_lookup_method.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample2_break_method.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/sample2_break_done.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/theos_create.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/tweak_init_project.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/tweak_make_error.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/tweak_demo_1.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/tweak_install.png">
+<meta property="og:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/tweak_demo_done.png">
+<meta property="og:updated_time" content="2018-05-31T08:25:09.204Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS逆向的基本操作">
+<meta name="twitter:description" content="0x01 使用OpenSSH登录iPhone&amp;emsp;&amp;emsp; 首先在Cydia安装OpenSSH插件     SSL：Secure Sockets Layer，是为了网络通信提供安全及数据完整性的一种安全协议，在传输层对网络连接进行加密。 OpenSSL：是SSL的开源实现，绝大部分的https其实就是http+openssl OpenSSH：远程登录，并且可以保证登录的安全性，安全性指的">
+<meta name="twitter:image" content="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/cydia_openssh.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/"/>
+
+
+
+
+
+  <title>iOS逆向的基本操作 | 朝暮的闲暇时刻</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">朝暮的闲暇时刻</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://leylfl.github.io/2018/05/30/iOS逆向的基本操作/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="朝暮">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="朝暮的闲暇时刻">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">iOS逆向的基本操作</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-30T15:27:17+08:00">
+                2018-05-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/逆向/" itemprop="url" rel="index">
+                    <span itemprop="name">逆向</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="0x01-使用OpenSSH登录iPhone"><a href="#0x01-使用OpenSSH登录iPhone" class="headerlink" title="0x01 使用OpenSSH登录iPhone"></a>0x01 使用OpenSSH登录iPhone</h1><p>&emsp;&emsp; 首先在Cydia安装OpenSSH插件</p>
+<p><img src="cydia_openssh.png" alt="OpenSSH插件示意图">  </p>
+<blockquote>
+<p>SSL：Secure Sockets Layer，是为了网络通信提供安全及数据完整性的一种安全协议，在传输层对网络连接进行加密。</p>
+<p>OpenSSL：是SSL的开源实现，绝大部分的https其实就是http+openssl</p>
+<p>OpenSSH：远程登录，并且可以保证登录的安全性，安全性指的就是其加密是由OpenSSL完成的。</p>
+</blockquote>
+<p>&emsp;&emsp; 接着，需要保证手机和Mac是在同一个wifi环境下。在Mac上的终端里输入</p>
+<blockquote>
+<p>ssh 用户名@手机ip地址</p>
+</blockquote>
+<p>&emsp;&emsp;这时候会让你保存散列值，这个散列值是用散列算法把公钥信息算出来的。</p>
+<p><img src="login_1.png" alt="login示意图"> </p>
+<p>&emsp;&emsp;输入yes后，会问你手机root账户的登录密码，密码默认是alpine。(通过passwd和passwd mobile修改两个账号的密码)</p>
+<p><img src="login_2.png" alt="login示意图"> </p>
+<p>&emsp;&emsp;密码输入后，就已经成功登录到你的手机上了，如果想要退出登录，终端输入exit即可。</p>
+<h3 id="SSL"><a href="#SSL" class="headerlink" title="SSL"></a>SSL</h3><p>&emsp;&emsp;连接有三个步骤</p>
+<ul>
+<li><p>建立安全连接</p>
+<blockquote>
+<p>第一次登录时，iPhone会将其自己的公钥等信息发给Mac端，会问我们是否保存，即我们第一次连接手机时出现的提示。</p>
+<blockquote>
+<p>/etc/ssh/ssh_host_rsa_key.pub -&gt; ~/.ssh/known_hosts</p>
+</blockquote>
+</blockquote>
+</li>
+<li><p>客户端认证</p>
+<blockquote>
+<p>基于密码的认证</p>
+<p>基于密钥的认证</p>
+<blockquote>
+<p>Mac端生成公钥和私钥(终端输入：ssh-keygen)，将公钥的内容追加到iPhone端(~/.ssh/authorized_keys，终端打开进.ssh目录：ssh-copy-id root@手机ip地址)</p>
+</blockquote>
+</blockquote>
+</li>
+<li><p>数据传输</p>
+</li>
+</ul>
+<hr>
+<h1 id="0x02-使用USB登录iPhone"><a href="#0x02-使用USB登录iPhone" class="headerlink" title="0x02 使用USB登录iPhone"></a>0x02 使用USB登录iPhone</h1><p>&emsp;&emsp;WIFI连接操作iPhone的效率低于直接用USB连接，所以我们有时候需要用USB进行登录手机的操作。</p>
+<p>&emsp;&emsp;默认情况下SSH走的是TCP协议，所以需要用到WIFI环境，所以我们需要设置将SSH通过USB连接手机，一般我们Mac电脑都有一个usbmuxd服务程序，首先我们需要将Mac电脑自己ssh到自己电脑的端口，比如端口10010，然后通过usbmuxd将这个10010端口映射到iPhone的22端口，这样相当于ssh到了手机的22端口。</p>
+<p>&emsp;&emsp;下载usbmuxd工具包：<a href="https://cgit.sukimashita.com/usbmuxd.git/snapshot/usbmuxd-1.0.8.tar.gz" target="_blank" rel="noopener">https://cgit.sukimashita.com/usbmuxd.git/snapshot/usbmuxd-1.0.8.tar.gz</a> ，需要用到里面的tcprelay.py和usbmux.py脚本</p>
+<p><img src="usbmuxd_tool.png" alt="usbmuxd_tool示意图"> </p>
+<p>&emsp;&emsp;映射端口，如果要保持端口映射就不能关闭或者结束当前终端命令</p>
+<blockquote>
+<p>python tcprelay.py -t 22:10010 </p>
+</blockquote>
+<p><img src="usbmuxd_operation_1.png" alt="usbmuxd操作示意图"> </p>
+<p>&emsp;&emsp;新开一个终端窗口，ssh连接到10010端口</p>
+<blockquote>
+<p>ssh root@localhost -p 10010</p>
+</blockquote>
+<p>&emsp;&emsp;这种方式建立的连接，也可以进行拷贝文件操作</p>
+<blockquote>
+<p>pscp -P 10010 Mac上文件路径 root@localhost:iPhone文件夹路径</p>
+</blockquote>
+<p>&emsp;&emsp;默认情况下，iOS终端不支持中文输入和显示 新建一个~/.inputrc文件，文件内容设置为</p>
+<blockquote>
+<p> set convert-meta off  ：不将中文字符转化为转义序列 </p>
+<p>set output-meta on ：允许向终端输出中文 </p>
+<p>set meta-flag on   \  set input-meta on ：允许向终端输入中文 </p>
+</blockquote>
+<hr>
+<h1 id="0x03-Cycript"><a href="#0x03-Cycript" class="headerlink" title="0x03 Cycript"></a>0x03 Cycript</h1><p>&emsp;&emsp;首先在手机Cydia上安装Cycript插件，安装完成后会要求重启Springboard。</p>
+<p>&emsp;&emsp;Cycript的常规操作，连接到手机后进行操作</p>
+<ul>
+<li><p>cycript开启</p>
+<ul>
+<li>cycript</li>
+</ul>
+<p><img src="cy_enter.png" alt="进入cy示意图"> </p>
+<ul>
+<li>cycript -p 进程id</li>
+<li>cycript -p 进程名称</li>
+</ul>
+</li>
+<li><p>退出cycript：ctrl + d</p>
+</li>
+<li><p>取消输入：ctrl + c</p>
+</li>
+<li><p>查询进程：ps</p>
+<ul>
+<li>ps -A：查询所有进程</li>
+<li>ps -A | grep 关键字，过滤进程</li>
+</ul>
+</li>
+</ul>
+<h3 id="1-简单实战"><a href="#1-简单实战" class="headerlink" title="1. 简单实战"></a>1. 简单实战</h3><p>&emsp;&emsp;我们有如下页面，需要把红色的view隐藏掉</p>
+<p><img src="hidden_redView.png" alt="隐藏红色框示意图"> </p>
+<p>&emsp;&emsp;首先找到我们的app，此例中我们的进程是594</p>
+<blockquote>
+<p>ps -A</p>
+</blockquote>
+<p><img src="sample1_ps.png" alt="寻找进程示意图"> </p>
+<p>&emsp;&emsp;连上我们的app，然后打印下UIApplication对象</p>
+<blockquote>
+<p>cycript -p 594</p>
+</blockquote>
+<p><img src="sample1_cy_app.png" alt="打印UIApplication示意图"></p>
+<p>&emsp;&emsp;如果想要打印所有成员变量</p>
+<blockquote>
+<p><code>*</code> 变量(或#地址)</p>
+</blockquote>
+<p><img src="sample1_cy_ivars.png" alt="打印成员变量示意图"></p>
+<p>&emsp;&emsp;如果要递归打印所有子view</p>
+<blockquote>
+<p>① view对象(或#地址).recursiveDescription().toString() </p>
+<p>② choose(UILabel)：可以筛选出所有子view是UILabel的</p>
+<p>③ 层级打印：[view _printHierarchy].toString()</p>
+</blockquote>
+<p><img src="sample1_cy_views.png" alt="打印子View示意图"></p>
+<p>&emsp;&emsp;至此，已经拿到我们要隐藏的Label的内存地址0x13ee12230，只需要设置hidden为YES即可</p>
+<blockquote>
+<p>[#0x13ee12230 setHidden:YES]</p>
+</blockquote>
+<p>&emsp;&emsp;更多使用，可以查看官方手册：<a href="http://www.cycript.org/manual/" target="_blank" rel="noopener">http://www.cycript.org/manual/</a></p>
+<h3 id="2-封装Cycript常用方法"><a href="#2-封装Cycript常用方法" class="headerlink" title="2. 封装Cycript常用方法"></a>2. 封装Cycript常用方法</h3><p>&emsp;&emsp;比如想封装一个返回keyWindow的方法以及一个打印对应view所有子控件的方法，我们定义代码如下，函数前面加上exports表示调用的时候需要加上工具的名字，比如tool.keyWindow；如果不加exports，表示直接使用函数名调用。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params">exports</span>)</span>&#123;</span><br><span class="line">	exports.keyWindow = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> UIApp.keyWindow;</span><br><span class="line">	&#125;;</span><br><span class="line"></span><br><span class="line">&#125;)(exports);</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;保存的文件格式以cy结尾，并在文件保存到手机的/usr/lib/cycript0.9/com文件夹下，比如在此文件夹下新建一个文件夹myCycript，那么刚刚新建的cy文件保存到/usr/lib/cycript0.9/com/myCycript下</p>
+<p><img src="sample1_cy_tool_path.png" alt="tool.cy保存示意图"></p>
+<p>&emsp;&emsp;导入的时候@import com.myCycript.tool，并且进行使用</p>
+<p><img src="sample1_cy_tool.png" alt="导入tool示意图"></p>
+<hr>
+<h1 id="0x04-Reveal的使用"><a href="#0x04-Reveal的使用" class="headerlink" title="0x04 Reveal的使用"></a>0x04 Reveal的使用</h1><p>&emsp;&emsp;首先手机的Cydia里面搜索安装Reveal Loader</p>
+<p><img src="reveal_install.png" alt="手机安装reveal保存示意图"></p>
+<p>&emsp;&emsp;然后设置 —&gt; Reveal  —&gt; Enabled Applications —&gt; 勾选要调试的app</p>
+<p><img src="reveal_app.png" alt="勾选app示意图"></p>
+<p>&emsp;&emsp;mac打开Reveal，菜单栏help —&gt; Show Reveal Library in Finder —&gt; iOS Library</p>
+<p><img src="reveal_install_libary.png" alt="Reveal找到iOS库示意图"></p>
+<p>&emsp;&emsp;打开库，找到里面的RevealServer</p>
+<p><img src="reveal_install_server.png" alt="Reveal库示意图"></p>
+<p>&emsp;&emsp;在iPhone的/Library下找到RHRevealLoader目录，如果没有就新建一个，并将之前的RevealServer文件复制到这个目录，并改名为libReveal.dylib</p>
+<blockquote>
+<p>scp /路径/RevealServer root@iPhone地址:/Library/RHRevealLoader/libReveal.dylib</p>
+</blockquote>
+<p><img src="reveal_catch.png" alt="Reveal获取app示意图"></p>
+<hr>
+<h1 id="0x05-脱壳"><a href="#0x05-脱壳" class="headerlink" title="0x05 脱壳"></a>0x05 脱壳</h1><p>&emsp;&emsp;脱壳分为硬脱壳和动态脱壳，硬脱壳是根据解密算法进行脱壳，也是官方的方式；动态脱壳是在内存中将程序导出。可以查看Mach-O格式来验证是否加壳</p>
+<blockquote>
+<p>① Mach-O View：Load Commands —&gt; LC_ENCRYPTION_INFO —&gt; Crypt ID的值为0是未加密</p>
+<p>② otool工具：otool -l 文件路径 | grep crypt</p>
+</blockquote>
+<h4 id="1-Clutch"><a href="#1-Clutch" class="headerlink" title="1. Clutch"></a>1. Clutch</h4><p>&emsp;&emsp;首先下载 <a href="https://github.com/KJCracks/Clutch/releases" target="_blank" rel="noopener">https://github.com/KJCracks/Clutch/releases</a> ，将Clutch文件拷贝到手机的/usr/bin目录，使用方法如下</p>
+<blockquote>
+<p>① clutch -i : 列出已安装的app</p>
+<p>② clutch -d app序号或bundle id：脱壳</p>
+<p>③ /private/var/mobile/Documents/Dumped下就是脱壳好的文件</p>
+</blockquote>
+<h4 id="2-Dumpdecrypted"><a href="#2-Dumpdecrypted" class="headerlink" title="2. Dumpdecrypted"></a>2. Dumpdecrypted</h4><p>&emsp;&emsp;首先下载<a href="https://github.com/stefanesser/dumpdecrypted。" target="_blank" rel="noopener">https://github.com/stefanesser/dumpdecrypted。</a></p>
+<p>&emsp;&emsp;在源代码目录下make进行编译，得到dumpdecrypted.dylib动态库文件。将这个文件拷贝到手机的/var/root目录下，使用方法如下</p>
+<blockquote>
+<p>① 终端进入/var/root目录下</p>
+<p>② 将这个动态库注入可执行文件中：DYLD_INSERT_LIBRARIES=dumpdecrypted.dylib 文件路径/文件.app/dump出文件的名字</p>
+<p>③ 生成的.dycrypted就是脱壳后的文件</p>
+</blockquote>
+<hr>
+<h1 id="0x06-动态调试"><a href="#0x06-动态调试" class="headerlink" title="0x06 动态调试"></a>0x06 动态调试</h1><p>&emsp;&emsp;动态调试需要用到debugserver，一开始是放在Xcode里面，当识别到手机设备时，Xcode会将debugserver放到手机的/Developer/usr/bin/目录下。</p>
+<p>&emsp;&emsp;但是一般情况下debugserver缺少权限，无法调试其他的app，需要重签名加上2个调试相关的权限。</p>
+<blockquote>
+<ul>
+<li>get-task-allow</li>
+<li>task_for_pid-allow</li>
+</ul>
+</blockquote>
+<p>&emsp;&emsp;先将/Developer/usr/bin/目录下的debugserver导出到mac，接着导出原来的签名权限</p>
+<blockquote>
+<p>ldid -e debugserver &gt; debugserver.entitlements </p>
+</blockquote>
+<p>&emsp;&emsp;给debugserver.entitlements 加上get-task-allow和task-for-pid_allow权限。接着重新签名</p>
+<blockquote>
+<p>ldid -S debugserver.entitlements debugserver </p>
+<p>如果没有安装ldid：brew install ldid  </p>
+</blockquote>
+<p><img src="debug_append.png" alt="加上权限示意图"></p>
+<p>&emsp;&emsp;也可以用codesign重签</p>
+<blockquote>
+<p>① 查看权限信息：codesign -d —entitilements - debugserver</p>
+<p>② 签名权限：codesign -f -s - –entitlements debugserver.entitlements debugserver </p>
+</blockquote>
+<p>&emsp;&emsp;最后放到/usr/bin/目录，注意不是之前的那个/Developer/usr/bin。</p>
+<p>&emsp;&emsp;我们在手机终端敲下debugserver，如果拒绝执行，需要加上运行权限</p>
+<blockquote>
+<p>chmod +x debugserver </p>
+</blockquote>
+<h4 id="简单实战"><a href="#简单实战" class="headerlink" title="简单实战"></a>简单实战</h4><p>&emsp;&emsp;我们想要在button的点击事件打个断点</p>
+<p><img src="sample2_demo.png" alt="程序示意图"></p>
+<p>&emsp;&emsp;找到进程id，此例是607。接着debugserver进行附加程序</p>
+<blockquote>
+<p>debugserver *:10011 -a 607 </p>
+<p>表示的意思是：debugserver 地址:端口 -a 进程id</p>
+</blockquote>
+<p>&emsp;&emsp;电脑上如果是wifi连接手机的话，命令如下：</p>
+<blockquote>
+<p>process connect connect://手机ip地址:debugserver的端口号(即上面的607)</p>
+</blockquote>
+<p>&emsp;&emsp;如果是usb映射连接手机的话，mac上需要多映射一个端口</p>
+<blockquote>
+<p>python tcprelay.py -t 10011:10011 </p>
+</blockquote>
+<p>&emsp;&emsp;接着，lldb连接debugserver服务</p>
+<blockquote>
+<p>process connect connect://localhost:10011 </p>
+</blockquote>
+<p>&emsp;&emsp;我们用私有方法<code>_shortMethodDescription</code>找到控制器当下所有的方法</p>
+<blockquote>
+<p>po [[UIApplication sharedApplication].keyWindow.rootViewController _shortMethodDescription] </p>
+</blockquote>
+<p><img src="sample2_lookup_method.png" alt="查找方法示意图"></p>
+<p>&emsp;&emsp;我们找到了一个<code>buttonClick</code>的方法，我们设置断点</p>
+<blockquote>
+<p>b buttonClick </p>
+</blockquote>
+<p><img src="sample2_break_method.png" alt="设置方法断点示意图"></p>
+<p>&emsp;&emsp;我们输入c，让程序继续运行，然后点下按钮，发现我们的方法被断下了</p>
+<p><img src="sample2_break_done.png" alt="方法断点成功示意图"></p>
+<h4 id="lldb其他命令"><a href="#lldb其他命令" class="headerlink" title="lldb其他命令"></a>lldb其他命令</h4><ul>
+<li>br l ：查看所有断的点</li>
+<li>br del 8：把标号为8的断点删除</li>
+<li>b name：所有方法叫name的都下断点</li>
+<li>b -[NSString stringWithFormat:]：给NSString类的stringWithFormat方法下断点</li>
+<li>br s -S count：给所有selector为count的方法下断点</li>
+<li>br s -a：内存地址断点 </li>
+<li>s：源码级别单步执行，遇到子函数进入</li>
+<li>si：单步执行，遇到子函数进入</li>
+<li>n：源码级别单步执行，遇到子函数不进入</li>
+<li>ni：单步执行，遇到子函数不进入</li>
+<li>f：退出子函数</li>
+<li>image lookup –address 内存地址</li>
+<li>image list -o -f：查看当前进程中的所有模块，一般第一个使我们的主程序，会出现两个值，左边的是ASLR偏移地址，右边是偏移后的地址。右边减去前面就是hopper查看到的基地址</li>
+</ul>
+<p>参考页面：<a href="http://lldb.llvm.org/lldb-gdb.html" target="_blank" rel="noopener">http://lldb.llvm.org/lldb-gdb.html</a></p>
+<h4 id="更多私有函数"><a href="#更多私有函数" class="headerlink" title="更多私有函数"></a>更多私有函数</h4><ul>
+<li>recursiveDescription：按层次打印视图结构，递归方法，所以子视图下的子视图层级也会被打印</li>
+<li>_printHierarchy：直接打印某个view的信息</li>
+<li>_autolayoutTrace：recursiveDescription的简化版，去掉了view的相关描述</li>
+<li>_ivarDescription：所有成员变量的名字和值</li>
+<li>_methodDescription：打印对象的属性、实例方法和类方法</li>
+</ul>
+<hr>
+<h1 id="0x07-theos"><a href="#0x07-theos" class="headerlink" title="0x07 theos"></a>0x07 theos</h1><h4 id="1-修改Mac的环境变量"><a href="#1-修改Mac的环境变量" class="headerlink" title="1. 修改Mac的环境变量"></a>1. 修改Mac的环境变量</h4><ul>
+<li><p>新建一个theos目录，此例中我们为~/Documents/theos</p>
+</li>
+<li><p>编辑配置文件</p>
+<blockquote>
+<p><code>vi ~/.bash_profile</code></p>
+</blockquote>
+</li>
+<li><p>新加入如下两行内容</p>
+<blockquote>
+<p><code>export THEOS=~/Documents/theos</code></p>
+<p><code>export PATH=$THEOS/bin:$PATH</code></p>
+</blockquote>
+</li>
+<li><p>使环境变量生效</p>
+<blockquote>
+<p><code>source ~/.bash_profile</code></p>
+</blockquote>
+</li>
+</ul>
+<h4 id="2-下载theos"><a href="#2-下载theos" class="headerlink" title="2. 下载theos"></a>2. 下载theos</h4><p>&emsp;&emsp; 下载到我们刚才的~/Documents/theos目录</p>
+<blockquote>
+<p><code>git clone --recursive https://github.com/theos/theos.git $THEOS</code></p>
+</blockquote>
+<h4 id="3-新建一个Tweak项目"><a href="#3-新建一个Tweak项目" class="headerlink" title="3. 新建一个Tweak项目"></a>3. 新建一个Tweak项目</h4><p>&emsp;&emsp;新建一个目录存放项目，本例中使用~/Documents/hack，进入该目录后输入命令</p>
+<blockquote>
+<p>nic.pl</p>
+</blockquote>
+<p><img src="theos_create.png" alt="新建tweak示意图"></p>
+<p>&emsp;&emsp;我们选择序号11</p>
+<p><img src="tweak_init_project.png" alt="tweak项目初始化示意图"></p>
+<p>① 项目名称，<em>随便写</em></p>
+<p>② 项目ID，<em>随便写</em></p>
+<p>③ 作者，<em>随便写，不写直接回车的话默认选择Mac用户名</em></p>
+<p>④ 要被hack的项目Bundle ID，<em>可以用Cycript找到你要项目的Bundle ID</em></p>
+<p>⑤ 安装后要关闭的程序列表，<em>直接回车即可</em></p>
+<h4 id="4-编辑Makefile"><a href="#4-编辑Makefile" class="headerlink" title="4. 编辑Makefile"></a>4. 编辑Makefile</h4><p>&emsp;&emsp;打开Makefile，添加两个变量说明是通过什么ip和什么端口来访问手机</p>
+<ul>
+<li>THEOS_DEVICE_IP</li>
+<li>THEOS_DEVICE_PORT</li>
+</ul>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> THEOS_DEVICE_IP=127.0.0.1</span><br><span class="line"><span class="keyword">export</span> THEOS_DEVICE_PORT=10010</span><br><span class="line"></span><br><span class="line"><span class="keyword">include</span> <span class="variable">$(THEOS)</span>/makefiles/common.mk</span><br><span class="line"></span><br><span class="line">TWEAK_NAME = firstTweak</span><br><span class="line">firstTweak_FILES = Tweak.xm</span><br><span class="line"></span><br><span class="line"><span class="keyword">include</span> <span class="variable">$(THEOS_MAKE_PATH)</span>/tweak.mk</span><br><span class="line"></span><br><span class="line"><span class="section">after-install::</span></span><br><span class="line">	install.exec <span class="string">"killall -9 SpringBoard"</span></span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;每次操作嫌麻烦的话，也可以直接到~/.bach_profile中添加。</p>
+<h4 id="5-安装"><a href="#5-安装" class="headerlink" title="5. 安装"></a>5. 安装</h4><p>&emsp;&emsp;安装到手机，我们需要三个步骤：编译 –&gt; 打包为deb –&gt;安装</p>
+<ul>
+<li><p>编译：make</p>
+<blockquote>
+<p>如果装了多个Xcode可能会导致make报错，需要制定Xcode</p>
+<p>sudo xcode-select –switch /Application/Xcode.app/Contents/Developer</p>
+<p>如果继续报错，清理下之前的缓存：make clean</p>
+</blockquote>
+</li>
+<li><p>打包：make package</p>
+<blockquote>
+<p>打包的时候如果遇到错误：</p>
+<p><img src="tweak_make_error.png" alt="make package报错示意图"></p>
+<p>那就是压缩问题，改成gzip压缩就可以了</p>
+<ul>
+<li><p>修改dm.pl文件，<code>vim $THEOS/vendor/dm.pl/dm.pl</code>。用#号注释掉<code>use IO::Compress::Lzma;</code>和<code>use IO::Compress::Xz;</code></p>
+</li>
+<li><p>修改deb.mk内的压缩方式为gzip</p>
+<p><code>$ vim $THEOS/makefiles/package/deb.mk</code></p>
+<p><code>_THEOS_PLATFORM_DPKG_DEB_COMPRESSION ?= gzip</code></p>
+</li>
+</ul>
+</blockquote>
+</li>
+<li><p>安装：make install</p>
+</li>
+</ul>
+<h4 id="6-演示"><a href="#6-演示" class="headerlink" title="6. 演示"></a>6. 演示</h4><p>&emsp;&emsp;做个简单demo，我们如下图有5个cell，要求新增2个cell，分别展示6娃和7娃。</p>
+<p><img src="tweak_demo_1.png" alt="tweak_demo示意图"></p>
+<p>&emsp;&emsp;我们在我们的Tweak项目里，打开Tweak.xm文件，编写代码如下</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">%hook ViewController</span><br><span class="line"></span><br><span class="line">- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section &#123;</span><br><span class="line">    <span class="keyword">return</span> %orig + <span class="number">2</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath &#123;</span><br><span class="line">	<span class="keyword">if</span>(indexPath.row == <span class="number">5</span> || indexPath.row == <span class="number">6</span>) &#123;</span><br><span class="line">		UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@<span class="string">"cell"</span>];</span><br><span class="line">	    <span class="keyword">if</span>(!cell) &#123;</span><br><span class="line">	        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@<span class="string">"cell"</span>];</span><br><span class="line">	    &#125;</span><br><span class="line">	    </span><br><span class="line">	    cell.textLabel.text = [NSString stringWithFormat:@<span class="string">"%@娃"</span>, @(indexPath.row + <span class="number">1</span>)];</span><br><span class="line">	    <span class="keyword">return</span> cell;</span><br><span class="line">	&#125;</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> %orig;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">%end</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;安装到手机后，会需要确认两次手机root用户的密码</p>
+<p><img src="tweak_install.png" alt="tweak_install示意图"></p>
+<p>&emsp;&emsp;看下我们软件的变化，我们已经完成了我们的需求。即使重启app，也会一直生效。</p>
+<p><img src="tweak_demo_done.png" alt="tweak_demo示意图"></p>
+<p>&emsp;&emsp;theos常用语法：</p>
+<ul>
+<li><p>%hook：与%end配对，表示hook的类名</p>
+</li>
+<li><p>%orig：调用原来的实现</p>
+</li>
+<li><p>%new：新建类或方法</p>
+</li>
+<li><p>%log：打印到控制台</p>
+</li>
+<li><p>%property：新加属性</p>
+<p>更多语法参见：<a href="http://iphonedevwiki.net/index.php/Logos" target="_blank" rel="noopener">http://iphonedevwiki.net/index.php/Logos</a></p>
+</li>
+</ul>
+<hr>
+<h1 id="0x08-Frida"><a href="#0x08-Frida" class="headerlink" title="0x08 Frida"></a>0x08 Frida</h1><h4 id="1-安装"><a href="#1-安装" class="headerlink" title="1. 安装"></a>1. 安装</h4><p>&emsp;&emsp;Mac的安装</p>
+<blockquote>
+<p>sudo pip install frida</p>
+</blockquote>
+<p>&emsp;&emsp;iPhone的安装</p>
+<blockquote>
+<p>① 添加源：<a href="https://build.frida.re/" target="_blank" rel="noopener">https://build.frida.re/</a></p>
+<p>② 源加完后，搜索Frida进行安装</p>
+</blockquote>
+<h4 id="2-使用"><a href="#2-使用" class="headerlink" title="2. 使用"></a>2. 使用</h4><p>所有进程：frida-ps -U</p>
+<p>附加进程：frida -U 进程名字</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/28/dyld启动流程/" rel="next" title="dyld启动流程">
+                <i class="fa fa-chevron-left"></i> dyld启动流程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/06/07/玩玩Clang/" rel="prev" title="玩玩Clang">
+                玩玩Clang <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">朝暮</p>
+              <p class="site-description motion-element" itemprop="description">联系方式：leylfl@foxmail.com</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-使用OpenSSH登录iPhone"><span class="nav-number">1.</span> <span class="nav-text">0x01 使用OpenSSH登录iPhone</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SSL"><span class="nav-number">1.0.1.</span> <span class="nav-text">SSL</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-使用USB登录iPhone"><span class="nav-number">2.</span> <span class="nav-text">0x02 使用USB登录iPhone</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-Cycript"><span class="nav-number">3.</span> <span class="nav-text">0x03 Cycript</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-简单实战"><span class="nav-number">3.0.1.</span> <span class="nav-text">1. 简单实战</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-封装Cycript常用方法"><span class="nav-number">3.0.2.</span> <span class="nav-text">2. 封装Cycript常用方法</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x04-Reveal的使用"><span class="nav-number">4.</span> <span class="nav-text">0x04 Reveal的使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-脱壳"><span class="nav-number">5.</span> <span class="nav-text">0x05 脱壳</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Clutch"><span class="nav-number">5.0.0.1.</span> <span class="nav-text">1. Clutch</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-Dumpdecrypted"><span class="nav-number">5.0.0.2.</span> <span class="nav-text">2. Dumpdecrypted</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x06-动态调试"><span class="nav-number">6.</span> <span class="nav-text">0x06 动态调试</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#简单实战"><span class="nav-number">6.0.0.1.</span> <span class="nav-text">简单实战</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#lldb其他命令"><span class="nav-number">6.0.0.2.</span> <span class="nav-text">lldb其他命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#更多私有函数"><span class="nav-number">6.0.0.3.</span> <span class="nav-text">更多私有函数</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x07-theos"><span class="nav-number">7.</span> <span class="nav-text">0x07 theos</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-修改Mac的环境变量"><span class="nav-number">7.0.0.1.</span> <span class="nav-text">1. 修改Mac的环境变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-下载theos"><span class="nav-number">7.0.0.2.</span> <span class="nav-text">2. 下载theos</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-新建一个Tweak项目"><span class="nav-number">7.0.0.3.</span> <span class="nav-text">3. 新建一个Tweak项目</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-编辑Makefile"><span class="nav-number">7.0.0.4.</span> <span class="nav-text">4. 编辑Makefile</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-安装"><span class="nav-number">7.0.0.5.</span> <span class="nav-text">5. 安装</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-演示"><span class="nav-number">7.0.0.6.</span> <span class="nav-text">6. 演示</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x08-Frida"><span class="nav-number">8.</span> <span class="nav-text">0x08 Frida</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-安装"><span class="nav-number">8.0.0.1.</span> <span class="nav-text">1. 安装</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-使用"><span class="nav-number">8.0.0.2.</span> <span class="nav-text">2. 使用</span></a></li></ol></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">朝暮</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
